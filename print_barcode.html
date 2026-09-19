@@ -3,260 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Barcode Blueprint GL-A44 (32x19mm)</title>
-    <script src="https://cdn.jsdelivr.net/npm/bwip-js@3.0.4/dist/bwip-js-min.js"></script>
+    <title>Cetak Barcode Blueprint GL-A44 - IO ID STORE</title>
+    
+    <!-- Tailwind CSS CDN & Google Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- JsBarcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 8mm 4mm 8mm 4mm;
-        }
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 10px;
-            background: #f4f6f9;
-        }
-        .no-print {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            margin-bottom: 20px;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .grid-container {
-            width: 202mm;
-            display: grid;
-            grid-template-columns: repeat(6, 32mm);
-            grid-auto-rows: 19mm;
-            column-gap: 1.8mm;
-            row-gap: 0.2mm;
-            margin: 0 auto;
-        }
-        .label-box {
-            width: 32mm;
-            height: 19mm;
-            border: 1px dashed #ccc;
-            box-sizing: border-box;
-            padding: 0.8mm 0.5mm;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
-            background: white;
-            overflow: hidden;
-        }
-        .title {
-            font-size: 7.5pt;
-            font-weight: bold;
-            line-height: 1;
-            max-height: 5.5mm;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            word-break: break-word;
-            color: #000;
-        }
-        .barcode-canvas {
-            width: 90%;
-            height: 8.5mm !important;
-        }
-        .price {
-            font-size: 7.5pt;
-            font-weight: bold;
-            line-height: 1;
-            color: #000;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
         }
 
+        /* Ukuran Presisi Stiker GL-A44 (32mm x 19mm) */
+        .sticker-card {
+            width: 32mm;
+            height: 19mm;
+            border: 1px dashed #cbd5e1;
+            padding: 0.8mm; /* Indentasi ruang dalam agar teks tidak mepet */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: white;
+            border-radius: 2px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+
+        /* ATURAN CETAK PRESISI SESUAI TEMPLATE WORD GL-A44 */
         @media print {
-            .no-print { display: none; }
-            body { background: white; padding: 0; }
-            .label-box { border: none; }
+            @page {
+                size: A4 portrait;
+                /* Margin Halaman: Top 2mm, Right 4mm, Bottom 0mm, Left 4mm */
+                margin: 2mm 4mm 0mm 4mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #printArea {
+                display: grid !important;
+                grid-template-columns: repeat(6, 32mm) !important; /* 6 Kolom */
+                grid-auto-rows: 19mm !important;                   /* 14 Baris (Tinggi 19mm) */
+                gap: 1.5mm 2.5mm !important;                        /* Celah antar stiker */
+                width: 210mm !important;
+                justify-content: flex-start;
+            }
+            .sticker-card {
+                border: none !important;
+                box-shadow: none !important;
+            }
         }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-6 text-slate-800">
 
-<div class="no-print">
-    <h2>🖨️ Cetak Barcode Stiker (Blueprint GL-A44)</h2>
-    <p><small>Judul barang dipendekkan otomatis agar pas di stiker 32x19mm.</small></p>
-
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <div style="flex: 2;">
-            <label><b>Pilih Barang dari Stok:</b></label>
-            <select id="itemSelect"></select>
+    <!-- TOP HEADER / NAVBAR -->
+    <div class="max-w-7xl mx-auto mb-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                🖨️ Cetak Stiker Barcode <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full font-semibold">Blueprint GL-A44 (32x19mm)</span>
+            </h1>
+            <p class="text-xs text-slate-500 mt-0.5">Pilih barang, atur Qty (otomatis tercentang), dan lihat preview cetak 6 kolom secara langsung.</p>
         </div>
-        <div style="flex: 1;">
-            <label><b>Jumlah Cetak (Pcs):</b></label>
-            <input type="number" id="qtyInput" value="1" min="1">
-        </div>
-        <div style="flex: 1; align-self: flex-end;">
-            <button onclick="tambahKeAntrean()" style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">➕ Tambah</button>
+        <div class="flex items-center gap-2">
+            <button onclick="window.close()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer">
+                ⬅️ Kembali ke POS
+            </button>
+            <button onclick="window.print()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center gap-2">
+                🖨️ Cetak Sekarang (Ctrl + P)
+            </button>
         </div>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px; background: #e9ecef; padding: 10px; border-radius: 5px;">
-        <label><b>Posisi Awal Stiker Kosong (Offset):</b></label>
-        <input type="number" id="offsetInput" value="0" min="0" max="83" style="width: 70px;" onchange="renderGrid()">
-        <small style="color: #555;">(Isi jika kertas stiker A4 sudah terpakai sebagian sebelumnya)</small>
+    <!-- MAIN CONTAINER - SPLIT VIEW 2 KOLOM -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 no-print">
+        
+        <!-- KOLOM KIRI: PANEL KONTROL & DAFTAR BARANG -->
+        <div class="space-y-4">
+            
+            <!-- PANEL KONTROL & PENCARIAN -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">🔍 Cari Barang Stok</label>
+                    <input type="text" id="searchInput" oninput="filterInventory()" placeholder="Ketik SKU atau Nama (misal: iPhone, Charger, LCD)..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">🏷️ Stiker Terpakai (Offset Kosong)</label>
+                    <input type="number" id="offsetInput" min="0" value="0" oninput="renderLivePreview()" placeholder="0" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- TABEL DAFTAR BARANG -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                        <label for="selectAll" class="text-xs font-bold text-slate-700 cursor-pointer">Pilih Semua Terfilter</label>
+                    </div>
+                    <span id="selectedCountBadge" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg">
+                        0 Barang Dipilih
+                    </span>
+                </div>
+
+                <!-- CONTAINER LIST ITEM -->
+                <div id="inventoryContainer" class="divide-y divide-slate-100 max-h-[480px] overflow-y-auto p-2">
+                    <!-- Item di-render JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- KOLOM KANAN: LIVE PREVIEW HALAMAN CETAK BLUEPRINT GL-A44 (6 KOLOM) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 sticky top-4 self-start space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    📄 Live Preview GL-A44 <span class="text-xs text-slate-400 font-normal">(6 Kolom / 84 Stiker per Sheet)</span>
+                </h3>
+                <span id="totalStickerBadge" class="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
+                    Total: 0 Stiker
+                </span>
+            </div>
+
+            <!-- CONTAINER PREVIEW GRID 6 KOLOM -->
+            <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 max-h-[580px] overflow-y-auto">
+                <div id="previewGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 justify-items-center">
+                    <!-- Preview stiker di-render JS secara real-time -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div id="antreanList" style="margin-top: 15px;"></div>
+    <!-- AREA CETAK KHUSUS SAAT PRINT (TIDAK TERLIHAT DI LAYAR BROWSER BIASA) -->
+    <div id="printArea" class="hidden"></div>
 
-    <button onclick="window.print()" style="margin-top: 15px; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%;">🖨️ Cetak ke Epson L360 (Ctrl + P)</button>
-</div>
+    <script>
+        let inventoryData = [];
 
-<!-- CONTAINER LAYOUT A4 (6 KOLOM x 14 BARIS) -->
-<div class="grid-container" id="gridContainer"></div>
-
-<script>
-    // ⚠️ MASUKKAN URL WEB APP ANDA DI SINI
-    const API_URL = "https://script.google.com/macros/s/AKfycby6vLxkZJDrKuVuCmSyZyZ8eqdsXzgujr5xW8FvYFU9EuMHQPg5oXC76BpPWZ2XpBCv_A/exec";
-    let inventoryData = [];
-    let printQueue = [];
-
-    function persingkatNamaBarang(namaFull) {
-        if (!namaFull) return "SPAREPART";
-        let text = namaFull.toUpperCase();
-
-        let jenis = "";
-        if (text.includes("LCD")) jenis = "LCD";
-        else if (text.includes("BACKDOOR") || text.includes("BACKCOVER")) jenis = "BACKDOOR";
-        else if (text.includes("BATTERAI") || text.includes("BATERAI") || text.includes("BATTERY")) jenis = "BATERE";
-        else if (text.includes("FLEXIBLE") || text.includes("FLEX")) jenis = "FLEX";
-        else if (text.includes("TOUCHSCREEN")) jenis = "TS";
-        else if (text.includes("CHARGER") || text.includes("CAS")) jenis = "CHARGER";
-
-        let wordsToRemove = [
-            "SHINESTAR", "SUNSHINE", "TOUCHSCREEN", "BACKCOVER", "TUTUP", "BELAKANG", 
-            "CASING", "ORIGINAL", "ORI", "FULLSET", "FRAME", "CONTRAS", "KONTRAS", 
-            "BLACK", "HITAM", "WHITE", "PUTIH", "AAA", "MODULE"
+        // Kata tak penting yang otomatis dibuang dari nama barang
+        const UNWANTED_WORDS = [
+            /garansi\s*\d+\s*(tahun|bln|bulan)?/gi,
+            /grosir/gi,
+            /promo/gi,
+            /original\s*100%/gi,
+            /murah/gi,
+            /termurah/gi
         ];
 
-        wordsToRemove.forEach(w => {
-            let reg = new RegExp("\\b" + w + "\\b", "gi");
-            text = text.replace(reg, "");
-        });
-
-        text = text.replace(/\s+/g, " ").trim();
-
-        if (jenis && !text.startsWith(jenis)) {
-            text = jenis + " " + text;
-        }
-
-        if (text.length > 28) {
-            text = text.substring(0, 28);
-        }
-
-        return text;
-    }
-
-    async function loadData() {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "getInventory" })
+        function cleanItemName(rawName) {
+            if (!rawName) return "BARANG";
+            let name = String(rawName);
+            UNWANTED_WORDS.forEach(regex => {
+                name = name.replace(regex, "");
             });
-            const result = await response.json();
-            if(result.status === "success") {
-                inventoryData = result.data;
-                const select = document.getElementById('itemSelect');
-                select.innerHTML = inventoryData.map(item => `
-                    <option value="${item.sku}">[${item.sku}] ${persingkatNamaBarang(item.nama_barang)} - Rp ${parseInt(item.harga_jual || 0).toLocaleString('id-ID')}</option>
-                `).join('');
-            }
-        } catch(e) {
-            alert("Gagal mengambil data inventory!");
-        }
-    }
-
-    function tambahKeAntrean() {
-        const sku = document.getElementById('itemSelect').value;
-        const qty = parseInt(document.getElementById('qtyInput').value) || 1;
-        const item = inventoryData.find(i => i.sku === sku);
-
-        if(item) {
-            printQueue.push({ item: item, qty: qty });
-            renderAntrean();
-            renderGrid();
-        }
-    }
-
-    function hapusAntrean(index) {
-        printQueue.splice(index, 1);
-        renderAntrean();
-        renderGrid();
-    }
-
-    function renderAntrean() {
-        const div = document.getElementById('antreanList');
-        if(printQueue.length === 0) {
-            div.innerHTML = "<i>Belum ada barang di dalam antrean cetak.</i>";
-            return;
-        }
-        div.innerHTML = "<b>Antrean Cetak:</b>" + printQueue.map((q, idx) => `
-            <div style="background: white; border: 1px solid #ddd; padding: 6px 10px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px;">
-                <span>[<b>${q.item.sku}</b>] ${persingkatNamaBarang(q.item.nama_barang)} (<b>${q.qty} Pcs</b>)</span>
-                <button onclick="hapusAntrean(${idx})" style="background: red; color: white; border: none; border-radius: 3px; cursor: pointer;">Hapus</button>
-            </div>
-        `).join('');
-    }
-
-    function renderGrid() {
-        const container = document.getElementById('gridContainer');
-        container.innerHTML = "";
-
-        const offset = parseInt(document.getElementById('offsetInput').value) || 0;
-
-        for(let o = 0; o < offset; o++) {
-            const emptyBox = document.createElement('div');
-            emptyBox.className = 'label-box';
-            emptyBox.style.visibility = 'hidden';
-            container.appendChild(emptyBox);
+            return name.replace(/\s+/g, " ").trim().toUpperCase();
         }
 
-        printQueue.forEach(q => {
-            for(let i = 0; i < q.qty; i++) {
-                const box = document.createElement('div');
-                box.className = 'label-box';
-
-                const title = document.createElement('div');
-                title.className = 'title';
-                title.innerText = persingkatNamaBarang(q.item.nama_barang);
-
-                const canvas = document.createElement('canvas');
-                canvas.className = 'barcode-canvas';
-
-                const price = document.createElement('div');
-                price.className = 'price';
-                price.innerText = `Rp ${parseInt(q.item.harga_jual || 0).toLocaleString('id-ID')}`;
-
-                box.appendChild(title);
-                box.appendChild(canvas);
-                box.appendChild(price);
-                container.appendChild(box);
-
-                // Render barcode menggunakan Canvas BWIP-JS (Sangat Stabil)
+        function loadInventory() {
+            const raw = localStorage.getItem('pos_inventory');
+            if (raw) {
                 try {
-                    bwipjs.toCanvas(canvas, {
-                        bcid:        'code128',
-                        text:        q.item.sku || 'SP-000000',
-                        scale:       2,
-                        height:      8,
-                        includetext: false
-                    });
+                    inventoryData = JSON.parse(raw);
                 } catch (e) {
-                    console.error(e);
+                    inventoryData = [];
                 }
             }
-        });
-    }
+            renderInventoryList(inventoryData);
+        }
 
-    loadData();
-</script>
+        function renderInventoryList(list) {
+            const container = document.getElementById('inventoryContainer');
+            if (!list || list.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm">Tidak ada barang yang ditemukan.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(item => {
+                const sku = item.sku || item.SKU || "SP-000";
+                const rawName = item.nama_barang || item.Nama_Barang || "Tanpa Nama";
+                const cleanName = cleanItemName(rawName);
+                const jual = item.harga_jual || item.Harga_Jual || 0;
+                const stok = item.stok || item.Stok || 0;
+
+                return `
+                    <div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl transition gap-3">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <input type="checkbox" id="chk_${sku}" class="item-checkbox w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer" data-sku="${sku}" onchange="renderLivePreview()">
+                            <div class="truncate">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">${sku}</span>
+                                    <h4 class="text-xs font-semibold text-slate-800 truncate" title="${cleanName}">${cleanName}</h4>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Stok: ${stok} | Rp ${parseInt(jual).toLocaleString('id-ID')}</p>
+                            </div>
+                        </div>
+
+                        <!-- INPUT QTY DENGAN AUTO-SELECT CHECKBOX -->
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[11px] text-slate-500 font-medium">Qty:</span>
+                            <input type="number" id="qty_${sku}" min="1" value="1" oninput="handleQtyChange('${sku}', this.value)" class="w-14 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderLivePreview();
+        }
+
+        // AUTO-SELECT CHECKBOX SAAT QTY DIUBAH / DITAMBAH
+        function handleQtyChange(sku, val) {
+            const chk = document.getElementById(`chk_${sku}`);
+            const qtyVal = parseInt(val) || 0;
+
+            if (chk) {
+                if (qtyVal > 0) {
+                    chk.checked = true; // Otomatis tercentang!
+                }
+            }
+            renderLivePreview();
+        }
+
+        function filterInventory() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filtered = inventoryData.filter(item => {
+                const sku = String(item.sku || item.SKU || "").toLowerCase();
+                const nama = String(item.nama_barang || item.Nama_Barang || "").toLowerCase();
+                return sku.includes(query) || nama.includes(query);
+            });
+            renderInventoryList(filtered);
+        }
+
+        function toggleSelectAll(isChecked) {
+            document.querySelectorAll('.item-checkbox').forEach(chk => {
+                chk.checked = isChecked;
+            });
+            renderLivePreview();
+        }
+
+        // RENDER LIVE PREVIEW DI KOLOM KANAN DAN UPDATE PRINT AREA
+        function renderLivePreview() {
+            const previewGrid = document.getElementById('previewGrid');
+            const printArea = document.getElementById('printArea');
+            const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+            
+            document.getElementById('selectedCountBadge').innerText = `${selectedCheckboxes.length} Barang Dipilih`;
+
+            previewGrid.innerHTML = "";
+            printArea.innerHTML = "";
+
+            const offset = parseInt(document.getElementById('offsetInput').value) || 0;
+            let totalStickers = 0;
+
+            // Render Offset Stiker Kosong
+            for (let o = 0; o < offset; o++) {
+                totalStickers++;
+                // Preview Dummy Kosong
+                const dummyBox = document.createElement('div');
+                dummyBox.className = 'sticker-card border-dashed border-slate-300 opacity-40 bg-slate-50';
+                dummyBox.innerHTML = `<span class="text-[8px] text-slate-400">Kosong (${o+1})</span>`;
+                previewGrid.appendChild(dummyBox);
+
+                // Print Area Offset
+                const printDummy = document.createElement('div');
+                printDummy.className = 'sticker-card border-none';
+                printArea.appendChild(printDummy);
+            }
+
+            // Render Stiker Barang
+            selectedCheckboxes.forEach(chk => {
+                const sku = chk.getAttribute('data-sku');
+                const item = inventoryData.find(i => (i.sku || i.SKU) === sku);
+
+                if (item) {
+                    const rawName = item.nama_barang || item.Nama_Barang || "Tanpa Nama";
+                    const cleanName = cleanItemName(rawName);
+                    const jual = item.harga_jual || item.Harga_Jual || 0;
+                    const qtyInput = document.getElementById(`qty_${sku}`);
+                    const qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
+
+                    for (let q = 0; q < qty; q++) {
+                        totalStickers++;
+                        const previewSvgId = `prev_svg_${totalStickers}`;
+                        const printSvgId = `print_svg_${totalStickers}`;
+
+                        // Element Preview Kanan
+                        const prevCard = document.createElement('div');
+                        prevCard.className = 'sticker-card shadow-sm border-slate-200';
+                        prevCard.innerHTML = `
+                            <div style="font-size: 6.5px; font-weight: bold; max-width: 30mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1;">${cleanName}</div>
+                            <svg id="${previewSvgId}" style="max-width: 30mm; height: 9mm;"></svg>
+                            <div style="font-size: 6.5px; font-weight: bold; line-height: 1;">Rp ${parseInt(jual).toLocaleString('id-ID')}</div>
+                        `;
+                        previewGrid.appendChild(prevCard);
+
+                        // Element Print Area Presisi GL-A44 (32mm x 19mm)
+                        const printCard = document.createElement('div');
+                        printCard.className = 'sticker-card';
+                        printCard.innerHTML = `
+                            <div style="font-size: 6.5px; font-weight: bold; max-width: 30mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1;">${cleanName}</div>
+                            <svg id="${printSvgId}" style="max-width: 30mm; height: 10mm;"></svg>
+                            <div style="font-size: 6.5px; font-weight: bold; line-height: 1;">Rp ${parseInt(jual).toLocaleString('id-ID')}</div>
+                        `;
+                        printArea.appendChild(printCard);
+
+                        // Render Barcode
+                        setTimeout(() => {
+                            if (document.getElementById(previewSvgId)) {
+                                JsBarcode(`#${previewSvgId}`, sku, { format: "CODE128", width: 0.9, height: 16, displayValue: true, fontSize: 7, margin: 0 });
+                            }
+                            if (document.getElementById(printSvgId)) {
+                                JsBarcode(`#${printSvgId}`, sku, { format: "CODE128", width: 0.9, height: 18, displayValue: true, fontSize: 7, margin: 0 });
+                            }
+                        }, 10);
+                    }
+                }
+            });
+
+            document.getElementById('totalStickerBadge').innerText = `Total: ${totalStickers - offset} Stiker`;
+        }
+
+        window.onload = loadInventory;
+    </script>
 </body>
 </html>
