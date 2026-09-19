@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Konter Servis IO ID STORE V21</title>
+  
+  <!-- Tailwind CSS CDN & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { 
+      font-family: 'Plus Jakarta Sans', Arial, sans-serif; 
+      background-color: #f4f6f9; 
+      margin: 0; 
+      padding: 15px; 
+      display: flex; 
+      justify-content: center; 
+    }
+    .container { width: 100%; max-width: 620px; }
+    .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    h2, h3, h4 { color: #333; margin-top: 0; text-align: center; }
+    input, select, textarea { width: 95%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
+    button:hover { opacity: 0.9; }
+    .btn-success { background-color: #28a745; }
+    .btn-warning { background-color: #ffc107; color: #333; }
+    .btn-info { background-color: #17a2b8; color: white; }
+    .btn-purple { background-color: #6f42c1; color: white; }
+    .btn-danger { background-color: #dc3545; }
+    .hidden { display: none !important; }
+    .item-row { border-bottom: 2px solid #ddd; padding: 12px; margin-bottom: 12px; background: #fafafa; border-radius: 8px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; margin-top: 5px; width: auto; display: inline-block; }
+    .search-results { background: white; border: 1px solid #ccc; max-height: 150px; overflow-y: auto; border-radius: 8px; }
+    .search-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; }
+    .search-item:hover { background: #e9ecef; }
+    .badge-sku { background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    .stat-card { display: flex; justify-content: space-between; background: #e9ecef; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; }
+    .tab-btn { padding: 8px 12px; background: #ddd; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; }
+    .tab-btn.active { background: #007bff; color: white; }
+    .garansi-aktif { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+    .garansi-expired { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+    .chk-box { width: 18px; height: 18px; margin-right: 8px; cursor: pointer; vertical-align: middle; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- LOGIN -->
+  <div id="loginSection" class="card">
+    <h2>🔑 Login IO ID STORE</h2>
+    <input type="text" id="userId" placeholder="User ID (misal: OWN-001 / TK-001 / KS-001)">
+    <input type="password" id="password" placeholder="PIN / Password">
+    <button onclick="login()">Masuk</button>
+    <div id="message" style="margin-top: 10px; text-align: center;"></div>
+  </div>
+
+  <!-- MENU UTAMA / DASHBOARD MODERN GRID 2 KOLOM -->
+  <div id="mainSection" class="hidden space-y-4">
+    
+    <!-- HEADER PROFIL USER -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-base shadow-inner">
+          AA
+        </div>
+        <div>
+          <h3 id="userGreeting" class="font-bold text-slate-800 text-base leading-tight m-0 text-left">Halo, User</h3>
+          <div class="flex items-center gap-2 mt-1">
+            <span id="syncStatus" class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+              ⚡ Off-line Ready
+            </span>
+          </div>
+        </div>
+      </div>
+      <button onclick="logout()" title="Keluar" class="p-2 text-rose-500 hover:text-rose-700 active:scale-90 transition bg-rose-50 rounded-xl border-none cursor-pointer w-auto mt-0">
+        🚪
+      </button>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div>
+      <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider px-1 text-left">Quick Stats</h4>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-blue-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
+          <div class="p-2.5 bg-white/20 rounded-xl text-lg">🔧</div>
+          <div class="text-left">
+            <p class="text-[11px] text-blue-100 font-medium m-0">Servis Diproses</p>
+            <p class="text-lg font-bold m-0" id="dashServisCount">0 Unit</p>
+          </div>
+        </div>
+        <div class="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
+          <div class="p-2.5 bg-white/20 rounded-xl text-lg">🛍️</div>
+          <div class="text-left">
+            <p class="text-[11px] text-emerald-100 font-medium m-0">Penjualan Hari Ini</p>
+            <p class="text-lg font-bold m-0" id="dashOmsetToday">Rp 0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU UTAMA (GRID 2 KOLOM) -->
+    <div>
+      <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider px-1 text-left">Menu Utama</h4>
+      <div class="grid grid-cols-2 gap-3">
+
+        <!-- 1. Kasir & Penjualan -->
+        <button id="btnKasirPenjualan" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('kasirPenjualanSection'); renderReadyServiceList();">
+          <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛒</div>
+          <span class="text-xs font-bold text-slate-700">Kasir & Penjualan</span>
+        </button>
+
+        <!-- 2. Input Servis Masuk -->
+        <button id="btnInputServis" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('formServisSection')">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🔧</div>
+          <span class="text-xs font-bold text-slate-700">Input Servis Masuk</span>
+        </button>
+
+        <!-- 3. Status Pekerjaan Servis -->
+        <button id="btnStatusServis" class="role-teknisi role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('daftarServisSection'); renderServisList();">
+          <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📋</div>
+          <span class="text-xs font-bold text-slate-700">Status Servis</span>
+        </button>
+
+        <!-- 4. Cek & Tracking Garansi -->
+        <button id="btnGaransi" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('garansiSection'); renderGaransiList();">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛡️</div>
+          <span class="text-xs font-bold text-slate-700">Cek & Garansi</span>
+        </button>
+
+        <!-- 5. Kelola Stok -->
+        <button id="menuStok" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('inventorySection'); renderInventoryList();">
+          <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📦</div>
+          <span class="text-xs font-bold text-slate-700">Kelola Stok & Barcode</span>
+        </button>
+
+        <!-- 6. Laporan Keuangan -->
+        <button id="menuLaporan" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('reportSection'); loadFinancialReport();">
+          <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📊</div>
+          <span class="text-xs font-bold text-slate-700">Laporan Keuangan</span>
+        </button>
+
+        <!-- 7. Belanja Shopee & Email -->
+        <button id="menuShopee" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('shopeeSection'); renderShopeeQueue();">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛍️</div>
+          <span class="text-xs font-bold text-slate-700">Sync Shopee & Email</span>
+        </button>
+
+        <!-- 8. Kelola User & Staf -->
+        <button id="menuUser" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('userSection'); renderUsersList();">
+          <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-2xl mb-2">👥</div>
+          <span class="text-xs font-bold text-slate-700">Kelola User & Staf</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- TOMBOL KELUAR -->
+    <div class="pt-2">
+      <button class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-2xl shadow-sm active:scale-95 transition text-sm flex items-center justify-center gap-2 border-none cursor-pointer" onclick="logout()">
+        🚪 Keluar
+      </button>
+    </div>
+
+  </div>
+
+  <!-- TRANSAKSI KASIR PENJUALAN & AMBIL SERVIS (ALL-IN-ONE) -->
+  <div id="kasirPenjualanSection" class="card hidden">
+    <h3>🛒 Transaksi Kasir & Penjualan</h3>
+    <input type="text" id="kasirItemSearch" placeholder="🔍 Scan Barcode / Ketik Barang / Ketik No. Nota Servis..." onkeyup="searchKasirItem(this.value)">
+    <div id="kasirSearchResults" class="search-results hidden"></div>
+
+    <h4 style="margin-top:15px;">Daftar Keranjang Belanja & Servis</h4>
+    <div id="kasirCartList"></div>
+
+    <div class="stat-card" style="margin-top:10px; background:#fff8dc; border:1px solid #ffe8a1;">
+      <span>Total Bayar:</span>
+      <span style="color:blue; font-size:16px;" id="dispTotalKasirCart">Rp 0</span>
+    </div>
+
+    <label style="margin-top:10px; display:block;"><b>Metode Pembayaran:</b></label>
+    <select id="kasirPaymentMethod" onchange="toggleCashInput(this.value)">
+      <option value="Cash / Tunai">💵 Cash / Tunai</option>
+      <option value="Transfer QRIS">📱 Transfer / QRIS Bank</option>
+    </select>
+
+    <div id="cashInputGroup" style="margin-top:8px;">
+      <label><small><b>Nominal Uang Diterima (Rp):</b></small></label>
+      <input type="number" id="cashReceived" placeholder="Masukkan Jumlah Uang" oninput="hitungKembalianKasir()">
+      <div class="stat-card" style="background:#d4edda; margin-top:5px;">
+        <span>Uang Kembalian:</span>
+        <span style="color:green;" id="dispKasirChange">Rp 0</span>
+      </div>
+    </div>
+
+    <button id="btnBayarKasir" class="btn-success" onclick="prosesBayarKasirRetailLokal()">🟢 Bayar & Pelunasan Servis (Instant)</button>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+    
+    <h4>🔔 Antrean Servis Selesai (Siap Ambil)</h4>
+    <input type="text" id="searchReadyService" placeholder="🔍 Filter Nama / Tipe HP / Nota Selesai..." onkeyup="renderReadyServiceList(this.value)">
+    <div id="readyServiceQueueList" style="margin-top: 10px;"></div>
+
+    <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Batal / Kembali</button>
+  </div>
+
+  <!-- FORM INPUT SERVIS MASUK -->
+  <div id="formServisSection" class="card hidden">
+    <h3>📝 Form Servis Masuk</h3>
+    <input type="text" id="namaPelanggan" placeholder="Nama Pelanggan">
+    <input type="text" id="noHp" placeholder="No. WhatsApp (cth: 08123456789)">
+    <input type="text" id="tipeHp" placeholder="Tipe HP (misal: Samsung A12)">
+    <textarea id="kerusakan" placeholder="Keterangan Kerusakan"></textarea>
+    
+    <button class="btn-success" onclick="simpanServisKasirLokal()">💾 Simpan Servis Masuk (Instant)</button>
+    <button class="btn-danger" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- DAFTAR SERVIS -->
+  <div id="daftarServisSection" class="card hidden">
+    <h3>📋 Status Pekerjaan Servis</h3>
+    <input type="text" id="servisSearch" placeholder="🔍 Cari Nama / Tipe HP / No. Nota..." onkeyup="filterDaftarServis(this.value)">
+    <div id="servisList" style="margin-top: 10px;"></div>
+    <button class="btn-danger" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- READ-ONLY NOTA SERVIS DETAILS -->
+  <div id="notaDetailModal" class="card hidden" style="border:2px solid #17a2b8;">
+    <h3>📄 Rincian Nota Servis (Selesai/Lunas)</h3>
+    <div id="notaDetailContent" class="item-row" style="background:#fff8dc;"></div>
+    <button class="btn-danger" onclick="goBack()">Tutup</button>
+  </div>
+
+  <!-- TRACKING GARANSI SERVIS -->
+  <div id="garansiSection" class="card hidden">
+    <h3>🛡️ Cek & Tracking Garansi Servis</h3>
+    <input type="text" id="garansiSearch" placeholder="🔍 Cari No. Nota / Tipe HP / Nama / No. HP..." onkeyup="renderGaransiList(this.value)">
+    <div id="garansiList" style="margin-top: 15px;"></div>
+    <button class="btn-danger" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- MODUL PENGERJAAN SERVIS OLEH TEKNISI -->
+  <div id="teknisiModal" class="card hidden" style="border:2px solid #007bff;">
+    <h3>🛠️ Pengerjaan Servis Teknisi</h3>
+    <div id="teknisiInfo" style="background:#e9ecef; padding:10px; border-radius:5px; margin-bottom:10px;"></div>
+    
+    <h4>1. Sparepart Fisik dari Rak (Optional)</h4>
+    <input type="text" id="sparepartSearch" placeholder="🔍 Scan Barcode / Ketik Nama Barang..." onkeyup="searchSparepart(this.value)">
+    <div id="searchResults" class="search-results hidden"></div>
+    <div id="selectedSpareparts" style="margin-top: 10px;"></div>
+
+    <h4 style="margin-top:15px;">2. Tindakan / Pengerjaan Manual</h4>
+    <input type="text" id="tindakanManual" placeholder="Contoh: ACP CPU, Reball IC Power, Flash Firmware">
+
+    <h4 style="margin-top:15px;">3. Biaya Jasa & Garansi</h4>
+    <label><small><b>Biaya Jasa / Skill Pengerjaan (Rp):</b></small></label>
+    <input type="number" id="biayaJasa" placeholder="Masukkan Biaya Jasa" oninput="hitungTotalTeknisi()">
+
+    <label><small><b>Garansi (Hari):</b></small></label>
+    <input type="number" id="garansiHari" placeholder="Misal: 7">
+
+    <div class="stat-card" style="margin-top:10px; background:#fff8dc; border:1px solid #ffe8a1;">
+      <span>Total Transparan (Sparepart + Jasa):</span>
+      <span style="color:blue; font-size:16px;" id="dispTotalTeknisi">Rp 0</span>
+    </div>
+
+    <button class="btn-success" onclick="simpanPengerjaanTeknisiLokal()">💾 Simpan & Set Selesai (Instant)</button>
+    <button class="btn-danger" onclick="goBack()">Batal</button>
+  </div>
+
+  <!-- LAPORAN KEUANGAN DENGAN FILTER TANGGAL DINAMIS -->
+  <div id="reportSection" class="card hidden">
+    <h3>📊 Laporan & Analisis Konter</h3>
+    
+    <div style="margin-bottom: 12px; background:#e9ecef; padding:10px; border-radius:6px;">
+      <label><small><b>Filter Periode Keuangan:</b></small></label>
+      <select id="reportFilterRange" onchange="applyReportFilter()">
+        <option value="today">📅 Hari Ini</option>
+        <option value="month" selected>📅 Bulan Ini</option>
+        <option value="all">📅 Semua Waktu</option>
+        <option value="custom">📆 Custom Tanggal</option>
+      </select>
+      <div id="customDateRange" class="hidden" style="display:flex; gap:5px; margin-top:5px;">
+        <input type="date" id="startDate" onchange="applyReportFilter()">
+        <input type="date" id="endDate" onchange="applyReportFilter()">
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+      <button class="tab-btn active" id="btnTab1" onclick="switchReportTab(1)">💰 Keuangan</button>
+      <button class="tab-btn" id="btnTab2" onclick="switchReportTab(2)">🔥 Terlaris</button>
+      <button class="tab-btn" id="btnTab3" onclick="switchReportTab(3)">🐢 Ngendap (>60 Hari)</button>
+    </div>
+
+    <div id="tabKeuangan">
+      <div class="stat-card"><span>Total Omset Lunas:</span><span style="color: green;" id="statOmset">Rp 0</span></div>
+      <div class="stat-card" style="font-size:12px; padding-left:20px;"><span>└ Cash/Tunai:</span><span id="statCash">Rp 0</span></div>
+      <div class="stat-card" style="font-size:12px; padding-left:20px;"><span>└ Transfer QRIS:</span><span id="statQris">Rp 0</span></div>
+      <div class="stat-card"><span>Total Pengeluaran:</span><span style="color: red;" id="statExp">Rp 0</span></div>
+      <div class="stat-card" style="font-size: 16px;"><span>Laba Bersih:</span><span style="color: blue;" id="statLaba">Rp 0</span></div>
+    </div>
+    <div id="tabTerlaris" class="hidden"><div id="topProductsList"></div></div>
+    <div id="tabNgendap" class="hidden"><div id="deadStockList"></div></div>
+
+    <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- KELOLA STOK & CETAK BARCODE -->
+  <div id="inventorySection" class="card hidden">
+    <h3>📦 Kelola Stok & Cetak Barcode</h3>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-success" style="flex: 1;" onclick="showAddManualModal()">➕ Tambah Barang Manual</button>
+      <button class="btn-warning" style="flex: 1;" onclick="cetakBarcodeModal()">🖨️ Cetak Barcode</button>
+    </div>
+
+    <div style="margin-top: 15px; background: #e9ecef; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+      <label style="font-weight: bold; cursor: pointer;">
+        <input type="checkbox" id="selectAllInv" class="chk-box" onchange="toggleSelectAllInventory(this.checked)"> Pilih Semua
+      </label>
+      <button class="btn-danger btn-sm" onclick="hapusTerpilihLokal()" style="margin: 0;">🗑️ Hapus yang Dipilih</button>
+    </div>
+
+    <div id="inventoryList" style="margin-top: 10px;"></div>
+    <button class="btn-danger" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- MODUL POPUP TAMBAH BARANG MANUAL -->
+  <div id="addManualModal" class="card hidden" style="border:2px solid #28a745;">
+    <h3>➕ Tambah Barang Stok Manual</h3>
+    <input type="text" id="manualNama" placeholder="Nama Sparepart / Barang">
+    <input type="number" id="manualHpp" placeholder="HPP / Modal (Rp)">
+    <input type="number" id="manualHargaJual" placeholder="Harga Jual (Rp)">
+    <input type="number" id="manualStok" placeholder="Jumlah Stok">
+    <button class="btn-success" onclick="simpanBarangManualLokal()">💾 Simpan Barang</button>
+    <button class="btn-danger" onclick="closeAddManualModal()">Batal</button>
+  </div>
+
+  <!-- MODUL EDIT BARANG STOK -->
+  <div id="editItemModal" class="card hidden" style="border:2px solid #ffc107;">
+    <h3>✏️ Edit Data Barang Stok</h3>
+    <input type="hidden" id="editSku">
+    <input type="text" id="editNama" placeholder="Nama Barang">
+    <input type="number" id="editHpp" placeholder="HPP (Rp)">
+    <input type="number" id="editHargaJual" placeholder="Harga Jual (Rp)">
+    <input type="number" id="editStok" placeholder="Stok">
+    <button class="btn-success" onclick="simpanEditBarangLokal()">💾 Update Barang</button>
+    <button class="btn-danger" onclick="closeEditModal()">Batal</button>
+  </div>
+
+  <!-- BELANJA SHOPEE & SYNC EMAIL -->
+  <div id="shopeeSection" class="card hidden">
+    <h3>🛒 Belanja Shopee & Sync Email</h3>
+    
+    <div class="item-row" style="background:#e9ecef;">
+      <h4>1. Catat Pengeluaran Belanja (Form 1)</h4>
+      <input type="text" id="shopeeNoPesanan" placeholder="No. Pesanan Shopee (cth: 260908GSQK7Y69)">
+      <input type="number" id="shopeeNominal" placeholder="Total Belanja (Rp)">
+      <input type="text" id="shopeeKet" placeholder="Keterangan (misal: LCD & Flexible)">
+      <button class="btn-success" onclick="simpanPengeluaranShopeeLokal()">💸 Catat Pengeluaran & Daftarkan Antrean</button>
+    </div>
+
+    <h4>2. Antrean Paket & Verifikasi Email (Form 2)</h4>
+    <div id="shopeeQueueList"></div>
+
+    <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
+  </div>
+
+  <!-- KELOLA USER & STAF -->
+  <div id="userSection" class="card hidden">
+    <h3>👥 Kelola Staf & Tambah User</h3>
+    <div class="item-row" style="background:#e9ecef;">
+      <h4>Tambah Staf Baru (Auto User ID)</h4>
+      <input type="text" id="newNama" placeholder="Nama Staf">
+      <select id="newRole">
+        <option value="Teknisi">Teknisi (Kode TK-xxx)</option>
+        <option value="Kasir">Kasir / Karyawan (Kode KS-xxx)</option>
+        <option value="Owner">Owner / Admin (Kode OWN-xxx)</option>
+      </select>
+      <input type="password" id="newPin" placeholder="Buat PIN / Password">
+      <button class="btn-success" onclick="simpanUserBaru()">💾 Buat Akun Staf</button>
+    </div>
+    <h4>Daftar Staf Terdaftar</h4>
+    <div id="userList"></div>
+    <button class="btn-danger" onclick="goBack()">Kembali</button>
+  </div>
+
+</div>
+
+<script>
+  // ⚠️ URL WEB APP GOOGLE APPS SCRIPT
+  const API_URL = "https://script.google.com/macros/s/AKfycbyejtV5ByL9asVfLu_vLw1qDYr34a5RCvgDDsR9MRtkHwxz3TGTgeeFsPSCT0gFVl1q3w/exec";
+
+  let currentUser = null;
+  let localServices = JSON.parse(localStorage.getItem('pos_services') || '[]');
+  let localInventory = JSON.parse(localStorage.getItem('pos_inventory') || '[]');
+  let localExpenses = JSON.parse(localStorage.getItem('pos_expenses') || '[]');
+  let localUsers = JSON.parse(localStorage.getItem('pos_users') || '[]');
+  let kasirCart = [];
+
+  let selectedSparepartList = [];
+  let selectedServiceForTeknisi = null;
+  let calculatedTotalTeknisi = 0;
+
+  let idleTimer = null;
+  const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
+  // UPDATE QUICK STATS DASHBOARD
+  function updateQuickStats() {
+    const prosesCount = localServices.filter(s => (s.Status || s.status) === 'Proses').length;
+    const todayStr = new Date().toISOString().split('T')[0];
+    let todayOmset = 0;
+    localServices.filter(s => {
+      const st = String(s.Status || s.status || "");
+      return (st.includes("Diambil") || st.includes("Berhasil")) && (s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk) === todayStr;
+    }).forEach(s => todayOmset += parseFloat(s.Total_Biaya || s.total_biaya || 0));
+
+    const elServis = document.getElementById('dashServisCount');
+    const elOmset = document.getElementById('dashOmsetToday');
+    if(elServis) elServis.innerText = `${prosesCount} Unit`;
+    if(elOmset) elOmset.innerText = `Rp ${formatRupiah(todayOmset)}`;
+  }
+
+  // NAVIGASI BACK BROWSER (WINDOW.HISTORY)
+  function openPage(pageId) {
+    document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    history.pushState({ page: pageId }, '', '#' + pageId);
+  }
+
+  function goBack() {
+    if(window.history.length > 1) {
+      history.back();
+    } else {
+      showMainMenu();
+    }
+  }
+
+  window.onpopstate = function(event) {
+    document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+    if (event.state && event.state.page) {
+      document.getElementById(event.state.page).classList.remove('hidden');
+    } else {
+      showMainMenu();
+    }
+  };
+
+  function showMainMenu() {
+    document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+    if(currentUser) {
+      document.getElementById('mainSection').classList.remove('hidden');
+      updateQuickStats();
+    } else {
+      document.getElementById('loginSection').classList.remove('hidden');
+    }
+  }
+
+  function saveAllLocal() {
+    localStorage.setItem('pos_services', JSON.stringify(localServices));
+    localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
+    localStorage.setItem('pos_expenses', JSON.stringify(localExpenses));
+    localStorage.setItem('pos_users', JSON.stringify(localUsers));
+    updateQuickStats();
+    triggerAutoSyncBackground();
+  }
+
+  // AUTO-SYNC BACKGROUND ENGINE
+  let syncTimeout = null;
+  function triggerAutoSyncBackground() {
+    const badge = document.getElementById('syncStatus');
+    if(badge) {
+      badge.innerText = "🔄 Syncing...";
+      badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700";
+    }
+    
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: "syncBulkData",
+            services: localServices,
+            inventory: localInventory,
+            expenses: localExpenses
+          })
+        });
+        const res = await response.json();
+        if(res.status === "success" && badge) {
+          badge.innerText = "⚡ Off-line Ready";
+          badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700";
+        }
+      } catch(e) {
+        if(badge) {
+          badge.innerText = "⚠️ Offline Mode";
+          badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700";
+        }
+      }
+    }, 3000);
+  }
+
+  window.onload = function() {
+    fetchMasterDataBackground();
+    const savedUser = localStorage.getItem('pos_user');
+    if(savedUser) {
+      currentUser = JSON.parse(savedUser);
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('mainSection').classList.remove('hidden');
+      document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+      applyRolePermissions();
+      updateQuickStats();
+      resetIdleTimer();
+    }
+  };
+
+  async function fetchMasterDataBackground() {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "getAllMasterData" })
+      });
+      const res = await response.json();
+      if(res.status === "success") {
+        if(res.services && res.services.length > 0) localServices = res.services;
+        if(res.inventory && res.inventory.length > 0) localInventory = res.inventory;
+        if(res.expenses && res.expenses.length > 0) localExpenses = res.expenses;
+        if(res.users && res.users.length > 0) localUsers = res.users;
+
+        localStorage.setItem('pos_services', JSON.stringify(localServices));
+        localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
+        localStorage.setItem('pos_expenses', JSON.stringify(localExpenses));
+        localStorage.setItem('pos_users', JSON.stringify(localUsers));
+        updateQuickStats();
+      }
+    } catch(e){}
+  }
+
+  async function login() {
+    const user_id = document.getElementById('userId').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const msg = document.getElementById('message');
+
+    if(!user_id || !password) {
+      msg.style.color = "red";
+      msg.innerText = "Isi User ID dan Password!";
+      return;
+    }
+
+    msg.style.color = "blue";
+    msg.innerText = "Memeriksa...";
+
+    let found = localUsers.find(u => 
+      String(u.id || u.User_ID || u[0]).toLowerCase() === user_id.toLowerCase() && 
+      String(u.pin || u.PIN || u.Password || u[3]) === password
+    );
+
+    if (!found) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: "login", user_id: user_id, password: password })
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+          currentUser = result.user;
+          localStorage.setItem('pos_user', JSON.stringify(currentUser));
+          await fetchMasterDataBackground();
+
+          document.getElementById('loginSection').classList.add('hidden');
+          document.getElementById('mainSection').classList.remove('hidden');
+          document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+          applyRolePermissions();
+          updateQuickStats();
+          msg.innerText = "";
+          resetIdleTimer();
+          return;
+        } else {
+          msg.style.color = "red";
+          msg.innerText = result.message;
+          return;
+        }
+      } catch (err) {
+        msg.style.color = "red";
+        msg.innerText = "Gagal terhubung ke server!";
+        return;
+      }
+    }
+
+    currentUser = { 
+      id: found.id || found.User_ID || found[0], 
+      nama: found.nama || found.Nama_Staf || found[1], 
+      role: found.role || found.Role || found[2] 
+    };
+    localStorage.setItem('pos_user', JSON.stringify(currentUser));
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('mainSection').classList.remove('hidden');
+    document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+    applyRolePermissions();
+    updateQuickStats();
+    msg.innerText = "";
+    resetIdleTimer();
+  }
+
+  // KASIR PENJUALAN RETAIL & ANTREAN SERVIS
+  function renderReadyServiceList(query = "") {
+    const div = document.getElementById('readyServiceQueueList');
+    const q = query.toLowerCase().trim();
+    const readyServices = localServices.filter(s => {
+      const st = String(s.Status || s.status || "");
+      return st.includes("Selesai") && !st.includes("Diambil");
+    });
+
+    const filtered = readyServices.filter(item => {
+      const nota = String(item.No_Nota || item.no_nota || "").toLowerCase();
+      const nama = String(item.Nama_Pelanggan || item.nama_pelanggan || "").toLowerCase();
+      const tipe = String(item.Tipe_HP || item.tipe_hp || "").toLowerCase();
+      return nota.includes(q) || nama.includes(q) || tipe.includes(q);
+    });
+
+    if(filtered.length === 0) { 
+      div.innerHTML = "<small style='color:#777;'>Tidak ada antrean servis selesai saat ini.</small>"; 
+      return; 
+    }
+
+    div.innerHTML = filtered.map(item => {
+      const nota = item.No_Nota || item.no_nota;
+      const nama = item.Nama_Pelanggan || item.nama_pelanggan;
+      const tipe = item.Tipe_HP || item.tipe_hp;
+      const total = item.Total_Biaya || item.total_biaya || 0;
+
+      return `
+        <div class="item-row" style="background:#fff8dc; display:flex; justify-space-between; align-items:center;">
+          <div>
+            <b>[${nota}] ${tipe} (${nama})</b><br>
+            <small>Biaya Servis: Rp ${formatRupiah(total)}</small>
+          </div>
+          <button class="btn-success btn-sm" onclick="addKasirCartService('${nota}')">➕ Tambah ke Keranjang</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function searchKasirItem(query) {
+    const resultsDiv = document.getElementById('kasirSearchResults');
+    if(!query || query.trim() === "") { resultsDiv.classList.add('hidden'); return; }
+    const q = query.toLowerCase().trim();
+
+    const matchesInv = localInventory.filter(item => {
+      const sku = String(item.sku || item.SKU || "").toLowerCase();
+      const nama = String(item.nama_barang || item.Nama_Barang || "").toLowerCase();
+      return sku.includes(q) || nama.includes(q);
+    });
+
+    const matchesSrv = localServices.filter(item => {
+      const nota = String(item.No_Nota || item.no_nota || "").toLowerCase();
+      const nama = String(item.Nama_Pelanggan || item.nama_pelanggan || "").toLowerCase();
+      const st = String(item.Status || item.status || "");
+      return st.includes("Selesai") && !st.includes("Diambil") && (nota.includes(q) || nama.includes(q));
+    });
+
+    let html = "";
+    if(matchesInv.length > 0) {
+      html += matchesInv.map(item => {
+        const sku = item.sku || item.SKU;
+        const nama = item.nama_barang || item.Nama_Barang;
+        const stok = item.stok || item.Stok || 0;
+        const jual = item.harga_jual || item.Harga_Jual || 0;
+        return `
+          <div class="search-item" onclick="addKasirCartItem('${sku}')">
+            <span class="badge-sku">${sku}</span> <b>${nama}</b> (Aksesoris)<br>
+            <small>Stok: ${stok} | Harga: Rp ${formatRupiah(jual)}</small>
+          </div>
+        `;
+      }).join('');
+    }
+
+    if(matchesSrv.length > 0) {
+      html += matchesSrv.map(item => {
+        const nota = item.No_Nota || item.no_nota;
+        const nama = item.Nama_Pelanggan || item.nama_pelanggan;
+        const tipe = item.Tipe_HP || item.tipe_hp;
+        const total = item.Total_Biaya || item.total_biaya || 0;
+        return `
+          <div class="search-item" style="background:#fff8dc;" onclick="addKasirCartService('${nota}')">
+            <span class="badge-sku" style="background:#28a745;">${nota}</span> <b>Servis: ${tipe} (${nama})</b><br>
+            <small>Biaya Servis: Rp ${formatRupiah(total)}</small>
+          </div>
+        `;
+      }).join('');
+    }
+
+    if(html !== "") {
+      resultsDiv.classList.remove('hidden');
+      resultsDiv.innerHTML = html;
+    } else {
+      resultsDiv.classList.remove('hidden');
+      resultsDiv.innerHTML = `<div class="search-item" style="color: #888;">Data tidak ditemukan.</div>`;
+    }
+  }
+
+  function addKasirCartItem(sku) {
+    const item = localInventory.find(i => String(i.sku || i.SKU) === String(sku));
+    if(item) {
+      const exist = kasirCart.find(c => String(c.sku || c.SKU) === String(sku));
+      if(exist) exist.qty += 1;
+      else kasirCart.push({ type: 'item', ...item, qty: 1 });
+      renderKasirCart();
+      document.getElementById('kasirItemSearch').value = "";
+      document.getElementById('kasirSearchResults').classList.add('hidden');
+    }
+  }
+
+  function addKasirCartService(nota) {
+    const s = localServices.find(i => String(i.No_Nota || i.no_nota) === String(nota));
+    if(s) {
+      const exist = kasirCart.find(c => String(c.nota || c.No_Nota || c.no_nota) === String(nota));
+      if(!exist) {
+        kasirCart.push({
+          type: 'service',
+          nota: s.No_Nota || s.no_nota,
+          nama: `Servis HP: ${s.Tipe_HP || s.tipe_hp} (${s.Nama_Pelanggan || s.nama_pelanggan})`,
+          harga: parseFloat(s.Total_Biaya || s.total_biaya) || 0,
+          qty: 1
+        });
+      }
+      renderKasirCart();
+      document.getElementById('kasirItemSearch').value = "";
+      document.getElementById('kasirSearchResults').classList.add('hidden');
+    }
+  }
+
+  function renderKasirCart() {
+    const div = document.getElementById('kasirCartList');
+    if(kasirCart.length === 0) { 
+      div.innerHTML = "<small>Keranjang belanja kosong.</small>"; 
+      document.getElementById('dispTotalKasirCart').innerText = "Rp 0"; 
+      hitungKembalianKasir();
+      return; 
+    }
+    let total = 0;
+    div.innerHTML = kasirCart.map((item, idx) => {
+      const nama = item.nama || item.nama_barang || item.Nama_Barang;
+      const jual = parseFloat(item.harga || item.harga_jual || item.Harga_Jual) || 0;
+      const sub = jual * item.qty;
+      total += sub;
+      return `
+        <div style="background: #e9ecef; padding: 6px; border-radius: 4px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <span><b>${nama}</b> (x${item.qty}) = Rp ${formatRupiah(sub)}</span>
+          <button type="button" class="btn-danger btn-sm" onclick="removeKasirCart(${idx})">❌</button>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('dispTotalKasirCart').innerText = `Rp ${formatRupiah(total)}`;
+    hitungKembalianKasir();
+  }
+
+  function removeKasirCart(idx) {
+    kasirCart.splice(idx, 1);
+    renderKasirCart();
+  }
+
+  function toggleCashInput(val) {
+    const grp = document.getElementById('cashInputGroup');
+    if(val.includes('Cash')) grp.classList.remove('hidden');
+    else grp.classList.add('hidden');
+  }
+
+  function hitungKembalianKasir() {
+    let total = 0;
+    kasirCart.forEach(item => {
+      const jual = parseFloat(item.harga || item.harga_jual || item.Harga_Jual) || 0;
+      total += (jual * item.qty);
+    });
+
+    const method = document.getElementById('kasirPaymentMethod').value;
+    const rec = parseFloat(document.getElementById('cashReceived').value) || 0;
+    const btn = document.getElementById('btnBayarKasir');
+
+    if(method.includes('Cash')) {
+      const change = rec - total;
+      document.getElementById('dispKasirChange').innerText = `Rp ${formatRupiah(Math.max(0, change))}`;
+      if(rec < total && total > 0) {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      }
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+  }
+
+  function prosesBayarKasirRetailLokal() {
+    if(kasirCart.length === 0) { alert("Keranjang belanja kosong!"); return; }
+    
+    let total = 0;
+    kasirCart.forEach(item => {
+      const jual = parseFloat(item.harga || item.harga_jual || item.Harga_Jual) || 0;
+      total += (jual * item.qty);
+    });
+
+    const method = document.getElementById('kasirPaymentMethod').value;
+    const rec = parseFloat(document.getElementById('cashReceived').value) || 0;
+
+    if(method.includes('Cash') && rec < total) {
+      alert("Uang pembayaran kurang! Mohon masukkan nominal yang cukup.");
+      return;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    kasirCart.forEach(cItem => {
+      if(cItem.type === 'item') {
+        const sku = cItem.sku || cItem.SKU;
+        const inv = localInventory.find(i => (i.sku || i.SKU) === sku);
+        if(inv) {
+          const st = parseInt(inv.stok || inv.Stok) || 0;
+          inv.stok = Math.max(0, st - cItem.qty);
+        }
+      } else if(cItem.type === 'service') {
+        const s = localServices.find(srv => (srv.No_Nota || srv.no_nota) === cItem.nota);
+        if(s) {
+          s.Status = "Diambil / Berhasil";
+          s.Metode_Pembayaran = method;
+          s.Tgl_Ambil = todayStr;
+        }
+      }
+    });
+
+    saveAllLocal();
+    alert("Transaksi Pelunasan & Penjualan Berhasil Disimpan!");
+    kasirCart = [];
+    document.getElementById('cashReceived').value = "";
+    renderKasirCart();
+    renderReadyServiceList();
+    goBack();
+  }
+
+  // TRACKING GARANSI & SERVIS
+  function renderGaransiList(query = "") {
+    const div = document.getElementById('garansiList');
+    const q = query.toLowerCase().trim();
+    const completedServices = localServices.filter(s => {
+      const st = String(s.Status || s.status || "");
+      return st.includes("Diambil") || st.includes("Berhasil");
+    });
+
+    const filtered = completedServices.filter(item => {
+      const nota = String(item.No_Nota || item.no_nota || "").toLowerCase();
+      const nama = String(item.Nama_Pelanggan || item.nama_pelanggan || "").toLowerCase();
+      const tipe = String(item.Tipe_HP || item.tipe_hp || "").toLowerCase();
+      const hp = String(item.No_HP || item.no_hp || "").toLowerCase();
+      return nota.includes(q) || nama.includes(q) || tipe.includes(q) || hp.includes(q);
+    });
+
+    if(filtered.length === 0) { div.innerText = "Tidak ada riwayat garansi."; return; }
+
+    const now = new Date();
+    div.innerHTML = filtered.map(item => {
+      const nota = item.No_Nota || item.no_nota;
+      const nama = item.Nama_Pelanggan || item.nama_pelanggan;
+      const tipe = item.Tipe_HP || item.tipe_hp;
+      const hp = item.No_HP || item.no_hp || "-";
+      const garansiHari = parseInt(item.Garansi_Hari || item.garansi_hari) || 0;
+      const tglAmbilStr = item.Tgl_Ambil || item.tgl_ambil || item.Tgl_Masuk || item.tgl_masuk;
+
+      let statusGaransiHtml = "";
+      if (tglAmbilStr && tglAmbilStr !== "-") {
+        const tglAmbil = new Date(tglAmbilStr);
+        const tglExpired = new Date(tglAmbil);
+        tglExpired.setDate(tglExpired.getDate() + garansiHari);
+
+        const diffTime = tglExpired - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays >= 0) {
+          statusGaransiHtml = `<span class="garansi-aktif">🟢 GARANSI AKTIF (Sisa ${diffDays} Hari)</span>`;
+        } else {
+          statusGaransiHtml = `<span class="garansi-expired">🔴 KADALUWARSA (Expired ${Math.abs(diffDays)} Hari lalu)</span>`;
+        }
+      } else {
+        statusGaransiHtml = `<span class="garansi-expired">⚠️ Belum Diambil</span>`;
+      }
+
+      return `
+        <div class="item-row">
+          <b>[${nota}] ${tipe} (${nama})</b> - HP: ${hp}<br>
+          Tgl Penyerahan: ${tglAmbilStr} | Garansi: ${garansiHari} Hari<br>
+          Status Garansi: ${statusGaransiHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function simpanServisKasirLokal() {
+    const nama = document.getElementById('namaPelanggan').value;
+    const hp = document.getElementById('noHp').value;
+    const tipe = document.getElementById('tipeHp').value;
+    const rusak = document.getElementById('kerusakan').value;
+
+    if(!nama || !tipe) { alert("Nama Pelanggan & Tipe HP wajib diisi!"); return; }
+
+    const noNota = "SRV-" + String(localServices.length + 1).padStart(3, '0');
+    const newServis = {
+      No_Nota: noNota,
+      Tgl_Masuk: new Date().toISOString().split('T')[0],
+      Nama_Pelanggan: nama,
+      No_HP: hp,
+      Tipe_HP: tipe,
+      Kerusakan: rusak,
+      Teknisi_ID: "-",
+      Biaya_Jasa: 0,
+      Sparepart_Diperbaiki: "-",
+      Garansi_Hari: 0,
+      Total_Biaya: 0,
+      Status: "Proses",
+      Metode_Pembayaran: "-",
+      Tgl_Ambil: "-"
+    };
+
+    localServices.push(newServis);
+    saveAllLocal();
+    alert("Servis Masuk Berhasil Disimpan Instant! No Nota: " + noNota);
+    document.getElementById('namaPelanggan').value = "";
+    document.getElementById('noHp').value = "";
+    document.getElementById('tipeHp').value = "";
+    document.getElementById('kerusakan').value = "";
+    goBack();
+  }
+
+  function renderServisList() {
+    filterDaftarServis(document.getElementById('servisSearch').value || "");
+  }
+
+  function filterDaftarServis(query) {
+    const q = query.toLowerCase().trim();
+    const role = currentUser ? currentUser.role.toLowerCase() : '';
+
+    let listToDisplay = localServices;
+    if (role.includes('teknisi')) {
+      listToDisplay = localServices.filter(item => {
+        const st = String(item.Status || item.status || "Proses");
+        return st === "Proses";
+      });
+    }
+
+    const filtered = listToDisplay.filter(item => {
+      const nota = String(item.No_Nota || item.no_nota || "").toLowerCase();
+      const nama = String(item.Nama_Pelanggan || item.nama_pelanggan || "").toLowerCase();
+      const tipe = String(item.Tipe_HP || item.tipe_hp || "").toLowerCase();
+      const st = String(item.Status || item.status || "").toLowerCase();
+      return nota.includes(q) || nama.includes(q) || tipe.includes(q) || st.includes(q);
+    });
+
+    const listDiv = document.getElementById('servisList');
+    if(filtered.length === 0) listDiv.innerText = "Tidak ada data servis.";
+    else {
+      listDiv.innerHTML = filtered.map(item => {
+        const nota = item.No_Nota || item.no_nota;
+        const tipe = item.Tipe_HP || item.tipe_hp;
+        const nama = item.Nama_Pelanggan || item.nama_pelanggan;
+        const rusak = item.Kerusakan || item.kerusakan;
+        const st = item.Status || item.status || "Proses";
+        const total = item.Total_Biaya || item.total_biaya || 0;
+
+        return `
+          <div class="item-row" onclick="handleServisClick('${nota}')">
+            <b>[${nota}] ${tipe} (${nama})</b><br>
+            Kerusakan: ${rusak}<br>
+            Status: <b style="color:${st === 'Proses' ? '#ffc107' : (st === 'Selesai' ? '#17a2b8' : '#28a745')};">${st}</b> | Total: Rp ${formatRupiah(total)}
+            <div style="margin-top:8px;" onclick="event.stopPropagation();">
+              ${(st === 'Proses' && (role.includes('teknisi') || role.includes('owner'))) ? `<button class="btn-warning btn-sm" onclick="bukaModalTeknisi('${nota}')">🛠️ Kerjakan / Isi Sparepart</button>` : ''}
+              ${(st === 'Proses' && role.includes('kasir') && !role.includes('owner')) ? `<small style="color:#856404; font-weight:bold;">🟡 Sedang Dikerjakan Teknisi</small>` : ''}
+              ${(st === 'Selesai' && !role.includes('teknisi')) ? `<button class="btn-success btn-sm" onclick="openPage('kasirPenjualanSection'); addKasirCartService('${nota}');">🛒 Ambil & Pelunasan Kasir</button>` : ''}
+              ${(st.includes('Diambil') || st.includes('Berhasil')) ? `<button class="btn-info btn-sm" onclick="bukaNotaDetail('${nota}')">📄 Lihat Nota Rincian</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function handleServisClick(noNota) {
+    const item = localServices.find(s => (s.No_Nota || s.no_nota) === noNota);
+    if(!item) return;
+    const st = item.Status || item.status || "Proses";
+    const role = currentUser ? currentUser.role.toLowerCase() : '';
+
+    if(st.includes("Diambil") || st.includes("Berhasil")) {
+      bukaNotaDetail(noNota);
+    } else if(st === "Selesai") {
+      if(!role.includes('teknisi')) {
+        openPage('kasirPenjualanSection');
+        addKasirCartService(noNota);
+      }
+    } else {
+      if(role.includes('teknisi') || role.includes('owner')) {
+        bukaModalTeknisi(noNota);
+      } else {
+        alert("Servis ini masih dalam pengerjaan teknisi.");
+      }
+    }
+  }
+
+  function bukaNotaDetail(noNota) {
+    const s = localServices.find(item => (item.No_Nota || item.no_nota) === noNota);
+    if(!s) return;
+
+    const nota = s.No_Nota || s.no_nota;
+    const nama = s.Nama_Pelanggan || s.nama_pelanggan;
+    const tipe = s.Tipe_HP || s.tipe_hp;
+    const sp = s.Sparepart_Diperbaiki || s.sparepart_diperbaiki || "-";
+    const jasa = s.Biaya_Jasa || s.biaya_jasa || 0;
+    const total = s.Total_Biaya || s.total_biaya || 0;
+    const gar = s.Garansi_Hari || s.garansi_hari || 0;
+    const pay = s.Metode_Pembayaran || s.metode_pembayaran || "-";
+    const tglA = s.Tgl_Ambil || s.tgl_ambil || "-";
+
+    document.getElementById('notaDetailContent').innerHTML = `
+      <b>NO. NOTA: ${nota} (LUNAS)</b><br>
+      ------------------------------------<br>
+      Pelanggan: <b>${nama}</b><br>
+      Tipe HP: <b>${tipe}</b><br>
+      Tindakan/Sparepart: ${sp}<br>
+      Biaya Jasa: Rp ${formatRupiah(jasa)}<br>
+      <b>TOTAL BAYAR: Rp ${formatRupiah(total)}</b><br>
+      ------------------------------------<br>
+      Pembayaran: ${pay}<br>
+      Tgl Penyerahan: ${tglA}<br>
+      Garansi Resmi: ${gar} Hari
+    `;
+
+    openPage('notaDetailModal');
+  }
+
+  function bukaModalTeknisi(noNota) {
+    const item = localServices.find(s => (s.No_Nota || s.no_nota) === noNota);
+    if(!item) return;
+    selectedServiceForTeknisi = noNota;
+
+    const nota = item.No_Nota || item.no_nota;
+    const nama = item.Nama_Pelanggan || item.nama_pelanggan;
+    const tipe = item.Tipe_HP || item.tipe_hp;
+    const rusak = item.Kerusakan || item.kerusakan;
+
+    document.getElementById('teknisiInfo').innerHTML = `<b>Nota:</b> ${nota}<br><b>Pelanggan:</b> ${nama} (${tipe})<br><b>Kerusakan:</b> ${rusak}`;
+    selectedSparepartList = [];
+    renderSelectedSpareparts();
+    document.getElementById('tindakanManual').value = "";
+    document.getElementById('biayaJasa').value = "";
+    document.getElementById('garansiHari').value = "";
+    hitungTotalTeknisi();
+    openPage('teknisiModal');
+  }
+
+  function searchSparepart(query) {
+    const resultsDiv = document.getElementById('searchResults');
+    if(!query || query.trim() === "") { resultsDiv.classList.add('hidden'); return; }
+    const q = query.toLowerCase().trim();
+    const matches = localInventory.filter(item => {
+      const sku = String(item.sku || item.SKU || "").toLowerCase();
+      const nama = String(item.nama_barang || item.Nama_Barang || "").toLowerCase();
+      return sku.includes(q) || nama.includes(q);
+    });
+
+    if(matches.length > 0) {
+      resultsDiv.classList.remove('hidden');
+      resultsDiv.innerHTML = matches.map(item => {
+        const sku = item.sku || item.SKU;
+        const nama = item.nama_barang || item.Nama_Barang;
+        const stok = item.stok || item.Stok || 0;
+        const jual = item.harga_jual || item.Harga_Jual || 0;
+        return `
+          <div class="search-item" onclick="selectSparepart('${sku}')">
+            <span class="badge-sku">${sku}</span> <b>${nama}</b><br>
+            <small>Stok: ${stok} | Harga: Rp ${formatRupiah(jual)}</small>
+          </div>
+        `;
+      }).join('');
+    } else {
+      resultsDiv.classList.remove('hidden');
+      resultsDiv.innerHTML = `<div class="search-item" style="color: #888;">Barang tidak ditemukan.</div>`;
+    }
+  }
+
+  function selectSparepart(sku) {
+    const item = localInventory.find(i => String(i.sku || i.SKU) === String(sku));
+    if(item) {
+      selectedSparepartList.push(item);
+      renderSelectedSpareparts();
+      document.getElementById('sparepartSearch').value = "";
+      document.getElementById('searchResults').classList.add('hidden');
+      hitungTotalTeknisi();
+    }
+  }
+
+  function renderSelectedSpareparts() {
+    const div = document.getElementById('selectedSpareparts');
+    if(selectedSparepartList.length === 0) { div.innerHTML = ""; return; }
+    div.innerHTML = "<b>Sparepart Terpilih:</b>" + selectedSparepartList.map((item, idx) => {
+      const sku = item.sku || item.SKU;
+      const nama = item.nama_barang || item.Nama_Barang;
+      const jual = item.harga_jual || item.Harga_Jual || 0;
+      return `
+        <div style="background: #e9ecef; padding: 6px; border-radius: 4px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+          <span><span class="badge-sku">${sku}</span> ${nama} (Rp ${formatRupiah(jual)})</span>
+          <button type="button" class="btn-danger btn-sm" onclick="removeSparepart(${idx})">❌</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function removeSparepart(index) {
+    selectedSparepartList.splice(index, 1);
+    renderSelectedSpareparts();
+    hitungTotalTeknisi();
+  }
+
+  function hitungTotalTeknisi() {
+    const jasa = parseFloat(document.getElementById('biayaJasa').value) || 0;
+    let totalSparepart = 0;
+    selectedSparepartList.forEach(item => totalSparepart += parseFloat(item.harga_jual || item.Harga_Jual) || 0);
+    calculatedTotalTeknisi = jasa + totalSparepart;
+    document.getElementById('dispTotalTeknisi').innerText = `Rp ${formatRupiah(calculatedTotalTeknisi)}`;
+  }
+
+  function simpanPengerjaanTeknisiLokal() {
+    const s = localServices.find(item => (item.No_Nota || item.no_nota) === selectedServiceForTeknisi);
+    if(s) {
+      let usedNamesArr = selectedSparepartList.map(i => i.nama_barang || i.Nama_Barang);
+      const man = document.getElementById('tindakanManual').value;
+      if(man) usedNamesArr.push(man);
+
+      s.Teknisi_ID = currentUser.id;
+      s.Biaya_Jasa = document.getElementById('biayaJasa').value || 0;
+      s.Sparepart_Diperbaiki = usedNamesArr.join(', ') || "-";
+      s.Garansi_Hari = document.getElementById('garansiHari').value || 0;
+      s.Total_Biaya = calculatedTotalTeknisi;
+      s.Status = "Selesai";
+
+      selectedSparepartList.forEach(sp => {
+        const spSku = sp.sku || sp.SKU;
+        const invItem = localInventory.find(i => (i.sku || i.SKU) === spSku);
+        if(invItem) {
+          const st = parseInt(invItem.stok || invItem.Stok) || 0;
+          invItem.stok = Math.max(0, st - 1);
+        }
+      });
+
+      saveAllLocal();
+      alert("Pengerjaan Servis Berhasil Disimpan Instant & Siap Diambil di Kasir!");
+      goBack();
+    }
+  }
+
+  // KELOLA STOK & HAPUS MASAL
+  function renderInventoryList() {
+    const listDiv = document.getElementById('inventoryList');
+    document.getElementById('selectAllInv').checked = false;
+
+    if(localInventory.length === 0) {
+      listDiv.innerText = "Belum ada stok barang.";
+      return;
+    }
+
+    listDiv.innerHTML = localInventory.map(item => {
+      const sku = item.sku || item.SKU || "-";
+      const nama = item.nama_barang || item.Nama_Barang || "-";
+      const hpp = item.hpp || item.HPP || 0;
+      const jual = item.harga_jual || item.Harga_Jual || 0;
+      const stok = item.stok || item.Stok || 0;
+
+      return `
+        <div class="item-row" style="display:flex; align-items:center;">
+          <input type="checkbox" class="chk-box item-chk" data-sku="${sku}">
+          <div style="flex:1;">
+            <b>[${sku}] ${nama}</b><br>
+            Stok: <b>${stok}</b> | HPP: Rp ${formatRupiah(hpp)} | Jual: Rp ${formatRupiah(jual)}
+            <div style="margin-top:5px;">
+              <button class="btn-warning btn-sm" onclick="bukaModalEditBarang('${sku}')">✏️ Edit</button>
+              <button class="btn-danger btn-sm" onclick="hapusBarangLokal('${sku}')">🗑️ Hapus</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleSelectAllInventory(isChecked) {
+    document.querySelectorAll('.item-chk').forEach(chk => chk.checked = isChecked);
+  }
+
+  function hapusTerpilihLokal() {
+    const checkedBoxes = document.querySelectorAll('.item-chk:checked');
+    if(checkedBoxes.length === 0) {
+      alert("Pilih minimal satu barang yang ingin dihapus!");
+      return;
+    }
+
+    if(confirm(`Yakin ingin menghapus ${checkedBoxes.length} barang yang dipilih?`)) {
+      const skusToDelete = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-sku'));
+      localInventory = localInventory.filter(i => !skusToDelete.includes(String(i.sku || i.SKU)));
+      saveAllLocal();
+      renderInventoryList();
+      alert(`${skusToDelete.length} barang berhasil dihapus!`);
+    }
+  }
+
+  function showAddManualModal() { openPage('addManualModal'); }
+  function closeAddManualModal() { goBack(); }
+
+  function simpanBarangManualLokal() {
+    const nama = document.getElementById('manualNama').value;
+    const hpp = document.getElementById('manualHpp').value || 0;
+    const jual = document.getElementById('manualHargaJual').value || 0;
+    const stok = document.getElementById('manualStok').value || 0;
+
+    if(!nama) { alert("Nama Barang wajib diisi!"); return; }
+
+    const newSku = "SP-" + Math.floor(100000 + Math.random() * 900000);
+    localInventory.push({
+      sku: newSku,
+      nama_barang: nama,
+      hpp: hpp,
+      harga_jual: jual,
+      stok: stok,
+      status: "Di Toko",
+      no_pesanan: "MANUAL",
+      tgl_masuk: new Date().toISOString().split('T')[0]
+    });
+
+    saveAllLocal();
+    alert("Barang Stok Berhasil Ditambahkan!");
+    document.getElementById('manualNama').value = "";
+    document.getElementById('manualHpp').value = "";
+    document.getElementById('manualHargaJual').value = "";
+    document.getElementById('manualStok').value = "";
+    goBack();
+    renderInventoryList();
+  }
+
+  function bukaModalEditBarang(sku) {
+    const item = localInventory.find(i => (i.sku || i.SKU) === sku);
+    if(!item) return;
+
+    document.getElementById('editSku').value = sku;
+    document.getElementById('editNama').value = item.nama_barang || item.Nama_Barang;
+    document.getElementById('editHpp').value = item.hpp || item.HPP;
+    document.getElementById('editHargaJual').value = item.harga_jual || item.Harga_Jual;
+    document.getElementById('editStok').value = item.stok || item.Stok;
+
+    openPage('editItemModal');
+  }
+
+  function closeEditModal() { goBack(); }
+
+  function simpanEditBarangLokal() {
+    const sku = document.getElementById('editSku').value;
+    const item = localInventory.find(i => (i.sku || i.SKU) === sku);
+    if(item) {
+      item.nama_barang = document.getElementById('editNama').value;
+      item.hpp = document.getElementById('editHpp').value;
+      item.harga_jual = document.getElementById('editHargaJual').value;
+      item.stok = document.getElementById('editStok').value;
+
+      saveAllLocal();
+      alert("Barang Berhasil Diperbarui!");
+      goBack();
+      renderInventoryList();
+    }
+  }
+
+  function hapusBarangLokal(sku) {
+    if(confirm("Yakin ingin menghapus barang stok " + sku + "?")) {
+      localInventory = localInventory.filter(i => (i.sku || i.SKU) !== sku);
+      saveAllLocal();
+      renderInventoryList();
+    }
+  }
+
+  function cetakBarcodeModal() {
+    alert("Membuka modul printer Blueprint GL-A44...");
+    window.open('print_barcode.html', '_blank');
+  }
+
+  // BELANJA SHOPEE & SYNC WITH AUTO-MERGE
+  function simpanPengeluaranShopeeLokal() {
+    const noPesanan = document.getElementById('shopeeNoPesanan').value.trim();
+    const nominal = document.getElementById('shopeeNominal').value;
+    const ket = document.getElementById('shopeeKet').value;
+
+    if(!noPesanan || !nominal) { alert("No. Pesanan dan Nominal wajib diisi!"); return; }
+
+    const existExp = localExpenses.find(e => String(e.no_pesanan || e.No_Pesanan).trim() === noPesanan);
+    if(existExp) {
+      alert("🛑 No. Pesanan Shopee ini sudah pernah terdaftar!");
+      return;
+    }
+
+    const newId = "EXP-" + String(localExpenses.length + 1).padStart(3, '0');
+    localExpenses.push({
+      id: newId,
+      tanggal: new Date().toISOString().split('T')[0],
+      kategori: "Belanja Shopee",
+      no_pesanan: noPesanan,
+      keterangan: ket || "Pembelian Sparepart Shopee",
+      nominal: nominal,
+      status_sync: "Belum Sync"
+    });
+
+    saveAllLocal();
+    alert("Pengeluaran Shopee Berhasil Dicatat & Masuk Antrean Sync!");
+    document.getElementById('shopeeNoPesanan').value = "";
+    document.getElementById('shopeeNominal').value = "";
+    document.getElementById('shopeeKet').value = "";
+    renderShopeeQueue();
+  }
+
+  function renderShopeeQueue() {
+    const div = document.getElementById('shopeeQueueList');
+    if(localExpenses.length === 0) div.innerHTML = "<small>Belum ada pengeluaran Shopee.</small>";
+    else {
+      div.innerHTML = localExpenses.map(exp => {
+        const noP = exp.no_pesanan || exp.No_Pesanan || "-";
+        const nom = exp.nominal || exp.Nominal || 0;
+        const ket = exp.keterangan || exp.Keterangan || "-";
+        const st = exp.status_sync || "Belum Sync";
+
+        return `
+          <div class="item-row">
+            <b>No. Pesanan: #${noP}</b><br>
+            Nominal: Rp ${formatRupiah(nom)} | Keterangan: ${ket}<br>
+            Status: <span style="font-size:11px; padding:2px 8px; border-radius:10px; font-weight:bold; background:${st === 'Sudah Sync' ? '#d4edda' : '#fff3cd'}; color:${st === 'Sudah Sync' ? '#155724' : '#856404'};">${st}</span>
+            <div style="margin-top:6px;">
+              ${st !== 'Sudah Sync' ? `<button class="btn-success btn-sm" onclick="syncEmailShopeeDirect('${noP}')">📩 Verifikasi & Masuk Stok Toko</button>` : `<small style="color:green;">✓ Barang Sudah Di Stok Toko</small>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  async function syncEmailShopeeDirect(noPesanan) {
+    alert("Memeriksa Gmail untuk Pesanan #" + noPesanan + "...");
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "fetchShopeeItems", no_pesanan: noPesanan })
+      });
+      const result = await response.json();
+
+      if(result.status === "success") {
+        const items = result.items;
+        let addedCount = 0;
+        let mergedCount = 0;
+
+        items.forEach(it => {
+          const cleanName = String(it.nama_barang).trim();
+          const existInv = localInventory.find(inv => String(inv.nama_barang || inv.Nama_Barang).toLowerCase().trim() === cleanName.toLowerCase());
+
+          if(existInv) {
+            const currentStok = parseInt(existInv.stok || existInv.Stok) || 0;
+            existInv.stok = currentStok + (it.qty || 1);
+            mergedCount++;
+          } else {
+            const sku = "SP-" + Math.floor(100000 + Math.random() * 900000);
+            localInventory.push({
+              sku: sku,
+              nama_barang: cleanName,
+              hpp: it.hpp,
+              harga_jual: it.harga_jual || (it.hpp * 1.3),
+              stok: it.qty || 1,
+              status: "Di Toko",
+              no_pesanan: noPesanan,
+              tgl_masuk: new Date().toISOString().split('T')[0]
+            });
+            addedCount++;
+          }
+        });
+
+        const exp = localExpenses.find(e => (e.no_pesanan || e.No_Pesanan) === noPesanan);
+        if(exp) exp.status_sync = "Sudah Sync";
+
+        saveAllLocal();
+        alert(`Sync Berhasil!\n- ${mergedCount} barang otomatis menambahkan stok lama\n- ${addedCount} barang baru berhasil dibuat SKU baru.`);
+        renderShopeeQueue();
+      } else {
+        alert("Gagal Sync Email: " + result.message);
+      }
+    } catch(e) { alert("Terjadi kesalahan jaringan!"); }
+  }
+
+  // LAPORAN KEUANGAN
+  function applyReportFilter() {
+    const range = document.getElementById('reportFilterRange').value;
+    const customDiv = document.getElementById('customDateRange');
+    if(range === 'custom') customDiv.classList.remove('hidden');
+    else customDiv.classList.add('hidden');
+
+    const now = new Date();
+    let filteredSrv = localServices.filter(s => {
+      const st = String(s.Status || s.status || "");
+      return st.includes("Diambil") || st.includes("Berhasil");
+    });
+
+    if(range === 'today') {
+      const todayStr = now.toISOString().split('T')[0];
+      filteredSrv = filteredSrv.filter(s => (s.Tgl_Masuk || s.tgl_masuk) === todayStr);
+    } else if(range === 'month') {
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      filteredSrv = filteredSrv.filter(s => {
+        const d = new Date(s.Tgl_Masuk || s.tgl_masuk);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
+    } else if(range === 'custom') {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if(start && end) {
+        filteredSrv = filteredSrv.filter(s => {
+          const tgl = s.Tgl_Masuk || s.tgl_masuk;
+          return tgl >= start && tgl <= end;
+        });
+      }
+    }
+
+    let omset = 0, cash = 0, qris = 0;
+    filteredSrv.forEach(s => {
+      const val = parseFloat(s.Total_Biaya || s.total_biaya) || 0;
+      omset += val;
+      const pay = String(s.Metode_Pembayaran || s.metode_pembayaran || "");
+      if(pay.includes('QRIS') || pay.includes('Transfer')) qris += val;
+      else cash += val;
+    });
+
+    let totalExp = 0;
+    localExpenses.forEach(e => totalExp += parseFloat(e.nominal || e.Nominal) || 0);
+
+    document.getElementById('statOmset').innerText = `Rp ${formatRupiah(omset)}`;
+    document.getElementById('statCash').innerText = `Rp ${formatRupiah(cash)}`;
+    document.getElementById('statQris').innerText = `Rp ${formatRupiah(qris)}`;
+    document.getElementById('statExp').innerText = `Rp ${formatRupiah(totalExp)}`;
+    document.getElementById('statLaba').innerText = `Rp ${formatRupiah(omset - totalExp)}`;
+  }
+
+  function loadFinancialReport() { applyReportFilter(); }
+
+  // USER MANAGEMENT
+  function renderUsersList() {
+    const div = document.getElementById('userList');
+    if(localUsers.length === 0) div.innerText = "Belum ada staf terdaftar.";
+    else {
+      div.innerHTML = localUsers.map(u => {
+        const id = u.id || u.User_ID || u[0];
+        const nama = u.nama || u.Nama_Staf || u[1];
+        const role = u.role || u.Role || u[2];
+        return `
+          <div style="border-bottom:1px solid #ddd; padding:6px 0;">
+            <b>[${id}] ${nama}</b> - Role: <i>${role}</i>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  async function simpanUserBaru() {
+    const nama = document.getElementById('newNama').value;
+    const role = document.getElementById('newRole').value;
+    const pin = document.getElementById('newPin').value;
+
+    if(!nama || !pin) { alert("Nama Staf dan PIN wajib diisi!"); return; }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "addUser", nama_staf: nama, role: role, pin: pin })
+      });
+      const result = await response.json();
+      alert(result.message);
+      if(result.status === "success" && result.new_user) {
+        localUsers.push(result.new_user);
+        saveAllLocal();
+      }
+      document.getElementById('newNama').value = "";
+      document.getElementById('newPin').value = "";
+      renderUsersList();
+    } catch(e) { alert("Gagal membuat user baru!"); }
+  }
+
+  function applyRolePermissions() {
+    const r = currentUser ? currentUser.role.toLowerCase() : '';
+    
+    document.querySelectorAll('.role-owner, .role-kasir, .role-teknisi').forEach(el => el.classList.add('hidden'));
+
+    if(r.includes('teknisi')) {
+      document.querySelectorAll('.role-teknisi').forEach(el => el.classList.remove('hidden'));
+    } else if(r.includes('kasir')) {
+      document.querySelectorAll('.role-kasir').forEach(el => el.classList.remove('hidden'));
+    } else {
+      document.querySelectorAll('.role-owner, .role-kasir, .role-teknisi').forEach(el => el.classList.remove('hidden'));
+    }
+  }
+
+  function formatRupiah(a) { return (!a && a !== 0) ? "0" : parseInt(a).toLocaleString('id-ID'); }
+  function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(() => { logout(); }, IDLE_TIMEOUT_MS); }
+  function logout() { localStorage.removeItem('pos_user'); currentUser = null; document.getElementById('mainSection').classList.add('hidden'); document.getElementById('loginSection').classList.remove('hidden'); }
+  function switchReportTab(n) { 
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+    document.getElementById(`btnTab${n}`).classList.add('active'); 
+    document.getElementById('tabKeuangan').classList.add('hidden'); 
+    document.getElementById('tabTerlaris').classList.add('hidden'); 
+    document.getElementById('tabNgendap').classList.add('hidden'); 
+    if(n===1) document.getElementById('tabKeuangan').classList.remove('hidden'); 
+    if(n===2) document.getElementById('tabTerlaris').classList.remove('hidden'); 
+    if(n===3) document.getElementById('tabNgendap').classList.remove('hidden'); 
+  }
+</script>
+
+</body>
+</html>
