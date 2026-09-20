@@ -805,7 +805,7 @@
         }
     }
 
-    // FUNGSI PENANGANAN HASIL SCAN KAMERA (HYBRID)
+    // FUNGSI PENANGANAN HASIL SCAN KAMERA (HYBRID & VALIDASI DUPLIKASI)
     function handleHasilScanKamera(kodeScan) {
         tutupKameraScanner();
         const kodeClean = String(kodeScan).trim().toLowerCase();
@@ -1767,6 +1767,7 @@
     function showAddManualModal() { openPage('addManualModal'); }
     function closeAddManualModal() { goBack(); }
 
+    // 🔒 PENAMBAHAN BARANG MANUAL DENGAN VALIDASI BLOKIR DUPLIKASI BARCODE PABRIK
     function simpanBarangManualLokal() {
         const barcodePabrik = document.getElementById('manualBarcodePabrik').value.trim();
         const nama = document.getElementById('manualNama').value.trim();
@@ -1774,19 +1775,34 @@
         const jual = parseRawNumber('manualHargaJual');
         const stok = parseInt(document.getElementById('manualStok').value) || 0;
 
-        if(!nama) { alert("Nama Barang wajib diisi!"); return; }
+        if (!nama) { 
+            alert("⚠️ Nama Barang wajib diisi!"); 
+            return; 
+        }
 
+        // 🛑 VALIDASI 1: Cek apakah Barcode Pabrik sudah digunakan oleh barang lain di inventaris
+        if (barcodePabrik && barcodePabrik !== "-") {
+            const barcodeClean = barcodePabrik.toLowerCase();
+            const barcodeExist = localInventory.find(i => 
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").trim().toLowerCase() === barcodeClean
+            );
+
+            if (barcodeExist) {
+                alert(`🛑 GAGAL MENYIMPAN!\n\nBarcode Pabrik "${barcodePabrik}" sudah terdaftar pada barang:\n"${barcodeExist.nama_barang || barcodeExist.Nama_Barang}"\n\nSatu barcode pabrik tidak boleh dipakai oleh 2 barang yang berbeda.`);
+                return;
+            }
+        }
+
+        // 🔍 VALIDASI 2: Cek kesamaan nama barang untuk menggabungkan stok
         const matchedItem = findMatchingInventoryItem(nama);
-        let targetItem = null;
 
         if (matchedItem) {
             const currentStok = parseInt(matchedItem.stok || matchedItem.Stok) || 0;
             matchedItem.stok = currentStok + stok;
-            targetItem = matchedItem;
             alert(`🔍 Barang Ditemukan Sama!\nStok barang "${matchedItem.nama_barang || matchedItem.Nama_Barang}" otomatis bertambah dari ${currentStok} menjadi ${matchedItem.stok}.`);
         } else {
             const newSku = "SP-" + Math.floor(100000 + Math.random() * 900000);
-            targetItem = {
+            const newItem = {
                 sku: newSku,
                 barcode_pabrik: barcodePabrik || "-",
                 nama_barang: nama,
@@ -1797,8 +1813,8 @@
                 no_pesanan: "MANUAL",
                 tgl_masuk: getLocalDateString()
             };
-            localInventory.push(targetItem);
-            alert("Barang Stok Baru Berhasil Ditambahkan dengan SKU Toko: " + newSku);
+            localInventory.push(newItem);
+            alert(`✅ Barang Stok Baru Berhasil Ditambahkan dengan SKU Toko: ${newSku}`);
         }
 
         saveAllLocal();
