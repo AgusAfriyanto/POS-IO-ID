@@ -581,14 +581,26 @@
     let selectedServiceForTeknisi = null;
     let calculatedTotalTeknisi = 0;
 
-    // UPDATE QUICK STATS DASHBOARD
+    // 🗓️ FUNGSI FORMAT TANGGAL LOKAL BROWSER/HP (WIB / YYYY-MM-DD)
+    function getLocalDateString(dateInput = new Date()) {
+        if (!dateInput || dateInput === "-") return "";
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return String(dateInput).split('T')[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // UPDATE QUICK STATS DASHBOARD (MURNI TANGGAL LOKAL WIB)
     function updateQuickStats() {
         const prosesCount = localServices.filter(s => (s.Status || s.status) === 'Proses').length;
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateString();
         let todayOmset = 0;
+
         localServices.filter(s => {
             const st = String(s.Status || s.status || "");
-            const tgl = (s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "").split('T')[0];
+            const tgl = getLocalDateString(s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "");
             return (st.includes("Diambil") || st.includes("Berhasil")) && tgl === todayStr;
         }).forEach(s => todayOmset += parseFloat(s.Total_Biaya || s.total_biaya || 0));
 
@@ -773,7 +785,6 @@
             config,
             (decodedText) => {
                 handleHasilScanKamera(decodedText);
-                tutupKameraScanner();
             },
             (errorMessage) => {}
         ).catch(err => {
@@ -794,15 +805,42 @@
         }
     }
 
+    // FUNGSI PENANGANAN HASIL SCAN KAMERA (HYBRID)
     function handleHasilScanKamera(kodeScan) {
+        tutupKameraScanner();
+        const kodeClean = String(kodeScan).trim().toLowerCase();
+
+        // Mode Kasir
         if (activeScannerTarget === 'kasir') {
-            document.getElementById('kasirItemSearch').value = kodeScan;
-            searchKasirItem(kodeScan);
-        } else if (activeScannerTarget === 'teknisi') {
+            const itemDitemukan = localInventory.find(i => 
+                String(i.sku || i.SKU || "").toLowerCase() === kodeClean ||
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").toLowerCase() === kodeClean
+            );
+
+            if (itemDitemukan) {
+                addKasirCartItem(itemDitemukan.sku || itemDitemukan.SKU);
+            } else {
+                alert(`⚠️ Barang dengan barcode "${kodeScan}" tidak ditemukan di inventaris!`);
+            }
+        } 
+        // Mode Teknisi
+        else if (activeScannerTarget === 'teknisi') {
             document.getElementById('sparepartSearch').value = kodeScan;
             searchSparepart(kodeScan);
-        } else if (activeScannerTarget === 'tambahManual') {
+        } 
+        // Mode Tambah Barang Manual
+        else if (activeScannerTarget === 'tambahManual') {
+            const itemAda = localInventory.find(i => 
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").toLowerCase() === kodeClean ||
+                String(i.sku || i.SKU || "").toLowerCase() === kodeClean
+            );
+
+            if (itemAda) {
+                alert(`⚠️ Barcode ini sudah terdaftar pada barang: "${itemAda.nama_barang || itemAda.Nama_Barang}"!`);
+            }
+            
             document.getElementById('manualBarcodePabrik').value = kodeScan;
+            document.getElementById('manualNama').focus();
         }
     }
 
@@ -1002,6 +1040,7 @@
         `}).join('');
     }
 
+    // FUNGSI PENCARIAN KASIR
     function searchKasirItem(query) {
         const resultsDiv = document.getElementById('kasirSearchResults');
         if(!query || query.trim() === "") { resultsDiv.classList.add('hidden'); return; }
@@ -1031,7 +1070,7 @@
                 const jual = item.harga_jual || item.Harga_Jual || 0;
                 return `
                 <div class="search-item" onclick="addKasirCartItem('${sku}')">
-                    <span class="badge-sku">${sku}</span> ${barcodePabrik ? `<small style='color:blue;'>[Pabrik: ${barcodePabrik}]</small>` : ''} <b>${nama}</b><br>
+                    <span class="badge-sku">${sku}</span> ${barcodePabrik && barcodePabrik !== '-' ? `<small style='color:blue;'>[Pabrik: ${barcodePabrik}]</small>` : ''} <b>${nama}</b><br>
                     <small>Stok: ${stok} | Harga: Rp ${formatRupiah(jual)}</small>
                 </div>
             `}).join('');
@@ -1058,7 +1097,7 @@
             resultsDiv.classList.remove('hidden');
             resultsDiv.innerHTML = `
                 <div class="search-item" style="background:#fff3cd;">
-                    ⚠️ Barcode <b>"${query}"</b> belum terdaftar.<br>
+                    ⚠️ Barcode / Kata Kunci <b>"${query}"</b> belum terdaftar.<br>
                     <button class="btn-success btn-sm" onclick="bukaModalOpsiA('${query}')">➕ Tambahkan Barang Baru Ini</button>
                 </div>
             `;
@@ -1661,7 +1700,7 @@
         }
     }
 
-    // MANAJEMEN STOK (INSTANT SYNC HAPUS)
+    // MANAJEMEN STOK
     function renderInventoryList() {
         const listDiv = document.getElementById('inventoryList');
         document.getElementById('selectAllInv').checked = false;
@@ -1711,7 +1750,7 @@
             localInventory = localInventory.filter(i => !skusToDelete.includes(String(i.sku || i.SKU)));
             localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
             renderInventoryList();
-            triggerAutoSyncBackground(true); // Instant Sync overwrite ke Google Sheets
+            triggerAutoSyncBackground(true);
             alert(`${skusToDelete.length} barang berhasil dihapus!`);
         }
     }
@@ -1721,7 +1760,7 @@
             localInventory = localInventory.filter(i => (i.sku || i.SKU) !== sku);
             localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
             renderInventoryList();
-            triggerAutoSyncBackground(true); // Instant Sync overwrite ke Google Sheets
+            triggerAutoSyncBackground(true);
         }
     }
 
@@ -1756,7 +1795,7 @@
                 stok: stok,
                 status: "Di Toko",
                 no_pesanan: "MANUAL",
-                tgl_masuk: new Date().toISOString().split('T')[0]
+                tgl_masuk: getLocalDateString()
             };
             localInventory.push(targetItem);
             alert("Barang Stok Baru Berhasil Ditambahkan dengan SKU Toko: " + newSku);
@@ -1843,7 +1882,7 @@
         const newId = "EXP-" + String(localExpenses.length + 1).padStart(3, '0');
         localExpenses.push({
             id: newId,
-            tanggal: new Date().toISOString().split('T')[0],
+            tanggal: getLocalDateString(),
             kategori: "Belanja Shopee",
             no_pesanan: noPesanan,
             keterangan: ket || "Pembelian Sparepart Shopee",
@@ -1863,7 +1902,6 @@
 
     function renderShopeeQueue() {
         const div = document.getElementById('shopeeQueueList');
-        
         const pendingExpenses = localExpenses.filter(exp => (exp.status_sync || "Belum Sync") !== "Sudah Sync");
 
         if(pendingExpenses.length === 0) {
@@ -1989,7 +2027,7 @@
             stok: draft.qty,
             status: "Di Toko",
             no_pesanan: draft.no_pesanan || "SHOPEE",
-            tgl_masuk: new Date().toISOString().split('T')[0]
+            tgl_masuk: getLocalDateString()
         };
 
         localInventory.push(newItem);
@@ -2009,7 +2047,7 @@
         }
     }
 
-    // LAPORAN KEUANGAN & ANALISIS
+    // LAPORAN KEUANGAN & ANALISIS (SISTEM TANGGAL LOKAL WIB)
     function applyReportFilter() {
         const range = document.getElementById('reportFilterRange').value;
         const customDiv = document.getElementById('customDateRange');
@@ -2017,7 +2055,7 @@
         else customDiv.classList.add('hidden');
 
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = getLocalDateString(now);
 
         let filteredSrv = localServices.filter(s => {
             const st = String(s.Status || s.status || "");
@@ -2028,10 +2066,10 @@
 
         if(range === 'today') {
             filteredSrv = filteredSrv.filter(s => {
-                const tgl = (s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "").split('T')[0];
+                const tgl = getLocalDateString(s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "");
                 return tgl === todayStr;
             });
-            filteredExp = filteredExp.filter(e => (e.tanggal || e.Tanggal || "").split('T')[0] === todayStr);
+            filteredExp = filteredExp.filter(e => getLocalDateString(e.tanggal || e.Tanggal || "") === todayStr);
         } else if(range === 'month') {
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -2048,11 +2086,11 @@
             const end = document.getElementById('endDate').value;
             if(start && end) {
                 filteredSrv = filteredSrv.filter(s => {
-                    const tgl = (s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "").split('T')[0];
+                    const tgl = getLocalDateString(s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "");
                     return tgl >= start && tgl <= end;
                 });
                 filteredExp = filteredExp.filter(e => {
-                    const tgl = (e.tanggal || e.Tanggal || "").split('T')[0];
+                    const tgl = getLocalDateString(e.tanggal || e.Tanggal || "");
                     return tgl >= start && tgl <= end;
                 });
             }
