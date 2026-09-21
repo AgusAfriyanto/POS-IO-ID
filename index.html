@@ -435,41 +435,52 @@
         <button class="btn-danger" onclick="goBack()">Kembali</button>
     </div>
 
-    <!-- TAMBAH BARANG MANUAL -->
+<!-- TAMBAH BARANG MANUAL (STEP-BY-STEP & QUICK CREATE) -->
     <div id="addManualModal" class="card hidden" style="border:2px solid #28a745;">
         <h3>➕ Tambah Barang Stok Manual</h3>
         
-        <label><small><b>1. Pilih / Ketik Kategori (Wajib):</b></small></label>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <input type="text" id="manualKategori" list="categoryDatalist" placeholder="Misal: LCD, Charger, Kabel, Baterai" onchange="populateBrandOptionsForForm()">
-            <datalist id="categoryDatalist"></datalist>
+        <!-- LANGKAH 1: KATEGORI WAJIB -->
+        <label><small><b>1. Pilih Kategori (Wajib Utama):</b></small></label>
+        <div style="display:flex; gap:5px; align-items:center; margin-bottom:10px;">
+            <select id="manualKategori" onchange="onKategoriManualChange(this.value)" style="margin:0;">
+                <option value="">-- Pilih Kategori --</option>
+            </select>
+            <button type="button" class="btn-success" onclick="bukaQuickCatModal()" style="width:auto; white-space:nowrap; padding:10px 14px; margin:0;" title="Tambah Kategori Baru">+ Baru</button>
         </div>
 
-        <label><small><b>2. Pilih / Ketik Merek (Wajib):</b></small></label>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <input type="text" id="manualMerek" list="brandDatalist" placeholder="Misal: OG, Mitu, Anker, Vivan">
-            <datalist id="brandDatalist"></datalist>
+        <!-- LANGKAH 2: MEREK WAJIB (TERKUNCI SEBELUM KATEGORI DIPILIH) -->
+        <label><small><b>2. Pilih Merek (Wajib):</b></small></label>
+        <div style="display:flex; gap:5px; align-items:center; margin-bottom:10px;">
+            <select id="manualMerek" onchange="onMerekManualChange(this.value)" disabled style="margin:0; background:#f1f5f9;">
+                <option value="">-- Pilih Kategori Dulu --</option>
+            </select>
+            <button type="button" id="btnQuickBrand" class="btn-success" onclick="bukaQuickBrandModal()" disabled style="width:auto; white-space:nowrap; padding:10px 14px; margin:0; opacity:0.5;" title="Tambah Merek Baru">+ Baru</button>
         </div>
 
-        <label><small><b>3. Barcode Pabrik / Kemasan (Opsional):</b></small></label>
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" id="manualBarcodePabrik" placeholder="Scan Barcode Kemasan Asli">
-            <button type="button" class="btn-scan-trigger" onclick="bukaKameraScanner('tambahManual')">📷 Scan</button>
-        </div>
+        <!-- LANGKAH 3: RINCIAN DETAIL BARANG (TERKUNCI SEBELUM MEREK DIPILIH) -->
+        <fieldset id="detailBarangFieldset" disabled style="border:1px dashed #cbd5e1; padding:12px; border-radius:8px; opacity:0.5; margin-top:10px; margin-bottom:10px;">
+            <legend style="font-size:12px; font-weight:bold; color:#64748b; padding:0 5px;">Langkah 3: Detail Barang</legend>
+            
+            <label><small><b>Barcode Pabrik / Kemasan (Opsional):</b></small></label>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <input type="text" id="manualBarcodePabrik" placeholder="Scan Barcode Kemasan Asli">
+                <button type="button" class="btn-scan-trigger" onclick="bukaKameraScanner('tambahManual')">📷 Scan</button>
+            </div>
 
-        <label><small><b>4. Nama Sparepart / Barang:</b></small></label>
-        <input type="text" id="manualNama" placeholder="Nama Barang">
+            <label><small><b>Nama Sparepart / Barang:</b></small></label>
+            <input type="text" id="manualNama" placeholder="Contoh: LCD iPhone 11 Crown / Hydrogel Bening">
+            
+            <label><small><b>HPP / Modal (Rp):</b></small></label>
+            <input type="text" id="manualHpp" inputmode="numeric" pattern="[0-9]*" placeholder="HPP / Modal (Rp)" oninput="formatRupiahInput(this)">
+            
+            <label><small><b>Harga Jual (Rp):</b></small></label>
+            <input type="text" id="manualHargaJual" inputmode="numeric" pattern="[0-9]*" placeholder="Harga Jual (Rp)" oninput="formatRupiahInput(this)">
+            
+            <label><small><b>Jumlah Stok:</b></small></label>
+            <input type="number" id="manualStok" placeholder="Jumlah Stok" value="1">
+        </fieldset>
         
-        <label><small><b>5. HPP / Modal (Rp):</b></small></label>
-        <input type="text" id="manualHpp" inputmode="numeric" pattern="[0-9]*" placeholder="HPP / Modal (Rp)" oninput="formatRupiahInput(this)">
-        
-        <label><small><b>6. Harga Jual (Rp):</b></small></label>
-        <input type="text" id="manualHargaJual" inputmode="numeric" pattern="[0-9]*" placeholder="Harga Jual (Rp)" oninput="formatRupiahInput(this)">
-        
-        <label><small><b>7. Jumlah Stok:</b></small></label>
-        <input type="number" id="manualStok" placeholder="Jumlah Stok" value="1">
-        
-        <button class="btn-success" onclick="simpanBarangManualLokal()">💾 Simpan Barang</button>
+        <button id="btnSimpanBarangManual" class="btn-success" onclick="simpanBarangManualLokal()" disabled style="opacity:0.5; cursor:not-allowed;">💾 Simpan Barang</button>
         <button class="btn-danger" onclick="closeAddManualModal()">Batal</button>
     </div>
 
@@ -585,7 +596,7 @@
                 <label><small><b>Kategori:</b></small></label>
                 <input type="text" id="newCatName" placeholder="Contoh: LCD, Charger, Baterai">
                 
-                <label><small><b>Merek (Terikat Kategori):</b></small></label>
+                <label><small><b>Merek (Opsional):</b></small></label>
                 <input type="text" id="newBrandName" placeholder="Contoh: OG, Mitu, Anker, Vivan">
                 
                 <button class="btn-success" onclick="simpanMasterCategoryBrand()">💾 Tambah ke Master Data</button>
@@ -598,6 +609,30 @@
         <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
     </div>
 
+    <!-- POPUP MINI QUICK CREATE KATEGORI -->
+    <div id="quickCatModal" class="modal-scanner hidden">
+        <div class="modal-content-scanner">
+            <h3>📁 Tambah Kategori Baru</h3>
+            <input type="text" id="quickCatName" placeholder="Contoh: Antigores, Flexibel, Baterai">
+            <div style="display:flex; gap:8px; margin-top:15px;">
+                <button class="btn-success" onclick="simpanQuickCategory()">💾 Simpan & Pakai</button>
+                <button class="btn-danger" onclick="tutupQuickCatModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP MINI QUICK CREATE MEREK -->
+    <div id="quickBrandModal" class="modal-scanner hidden">
+        <div class="modal-content-scanner">
+            <h3>🏷️ Tambah Merek Baru</h3>
+            <p style="font-size:12px; color:#64748b; margin-top:-5px;">Terikat ke Kategori: <b id="lblCatTargetBrand" style="color:#0284c7;">-</b></p>
+            <input type="text" id="quickBrandName" placeholder="Contoh: Hydrogel, OG, Vivan">
+            <div style="display:flex; gap:8px; margin-top:15px;">
+                <button class="btn-success" onclick="simpanQuickBrand()">💾 Simpan & Pakai</button>
+                <button class="btn-danger" onclick="tutupQuickBrandModal()">Batal</button>
+            </div>
+        </div>
+    </div>
     <!-- MODAL SCANNER KAMERA -->
     <div id="modalScanner" class="modal-scanner hidden">
         <div class="modal-content-scanner">

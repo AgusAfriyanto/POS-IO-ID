@@ -83,50 +83,67 @@ function updateQuickStats() {
 
 // ⚡ SINKRONISASI OTOMATIS & MANUAL
 let syncTimeout = null;
-function triggerAutoSyncBackground(isImmediate = false) {
-    const badge = document.getElementById('syncStatus');
-    if(badge) {
-        badge.innerText = "🔄 Syncing...";
-        badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
-    }
-    
-    clearTimeout(syncTimeout);
-    
-    const runSync = async () => {
-        if (!navigator.onLine) {
-            if(badge) {
-                badge.innerText = "⚡ Off-line Ready";
-                badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
-            }
-            return;
-        }
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: "syncBulkData",
-                    services: localServices,
-                    inventory: localInventory,
-                    expenses: localExpenses
-                })
-            });
-            const res = await response.json();
-            if(res.status === "success" && badge) {
-                badge.innerText = "⚡ Off-line Ready";
-                badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer";
-            }
-        } catch(e) {
-            if(badge) {
-                badge.innerText = "⚠️ Offline Mode";
-                badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 cursor-pointer";
-            }
+async function triggerAutoSyncBackground(isImmediate = false) {
+    const syncStatusEl = document.getElementById('syncStatus');
+
+    // Jika offline: Jangan kirim ke server, ubah status badge
+    if (!navigator.onLine) {
+        if (syncStatusEl) {
+            syncStatusEl.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
+            syncStatusEl.innerText = "🔌 Offline (Data Lokal)";
         }
+        return;
+    }
+
+    if (!API_URL) return;
+
+    if (syncStatusEl) {
+        syncStatusEl.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 cursor-pointer";
+        syncStatusEl.innerText = "🔄 Menyimpan...";
+    }
+
+    const payload = {
+        action: "syncBulkData",
+        inventory: JSON.parse(localStorage.getItem('pos_inventory') || '[]'),
+        services: JSON.parse(localStorage.getItem('pos_services') || '[]'),
+        expenses: JSON.parse(localStorage.getItem('pos_expenses') || '[]')
     };
 
-    if(isImmediate) runSync();
-    else syncTimeout = setTimeout(runSync, 2000);
+    try {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.status === "success" && syncStatusEl) {
+            syncStatusEl.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer";
+            syncStatusEl.innerText = "⚡ Sync Aktif";
+        }
+    } catch (err) {
+        if (syncStatusEl) {
+            syncStatusEl.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 cursor-pointer";
+            syncStatusEl.innerText = "⚠️ Sync Gagal";
+        }
+    }
 }
+
+// Alias agar pemanggilan triggerAutoSync() di stok.js maupun triggerAutoSyncBackground() di main.js sama-sama jalan
+const triggerAutoSync = triggerAutoSyncBackground;
+
+// 🌐 Otomatis sinkronisasi saat internet terhubung kembali
+window.addEventListener('online', () => {
+    triggerAutoSyncBackground(true);
+});
+
+window.addEventListener('offline', () => {
+    const syncStatusEl = document.getElementById('syncStatus');
+    if (syncStatusEl) {
+        syncStatusEl.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
+        syncStatusEl.innerText = "🔌 Offline (Data Lokal)";
+    }
+});
 
 async function manualSync() {
     await fetchMasterDataBackground();

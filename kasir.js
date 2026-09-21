@@ -416,3 +416,178 @@ async function bagikanNotaPNG() {
         alert("Gagal mengonversi gambar nota: " + err.message);
     }
 }
+// =========================================================================
+// 📄 FUNGSI LOGIKA NOTA TRANSAKSI (Buka Detail, Cetak Thermal & Share PNG)
+// =========================================================================
+
+// 1. FUNGSI MENAMPILKAN RINCIAN NOTA
+function bukaNotaDetail(noNota) {
+    // Cari data servis berdasarkan Nomor Nota
+    const s = localServices.find(item => (item.No_Nota || item.no_nota) === noNota);
+    if (!s) {
+        alert("Data transaksi nota tidak ditemukan!");
+        return;
+    }
+
+    const nota = s.No_Nota || s.no_nota;
+    const nama = s.Nama_Pelanggan || s.nama_pelanggan || "Pelanggan";
+    const tipe = s.Tipe_HP || s.tipe_hp || "Servis / Produk";
+    const tindakan = s.Sparepart_Diperbaiki || s.sparepart_diperbaiki || s.Tindakan || s.tindakan || "-";
+    const jasa = parseFloat(s.Biaya_Jasa || s.biaya_jasa) || 0;
+    const total = parseFloat(s.Total_Biaya || s.total_biaya) || 0;
+    const garansi = s.Garansi_Hari || s.garansi_hari || 0;
+    const pay = s.Metode_Pembayaran || s.metode_pembayaran || "Cash / Tunai";
+    const rawTgl = s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk;
+    const tglFormatted = typeof formatDateTimeIndo === 'function' ? formatDateTimeIndo(rawTgl) : rawTgl;
+    const petugas = currentUser ? (currentUser.nama || currentUser.Nama_Staf) : "AGUS AFRIYANTO";
+
+    // Profil Toko dari Settings
+    const storeName = storeProfile.name || "IO ID STORE";
+    const storeAddress = storeProfile.address || "Sira Jaya (Menendang) kec. pengkadan";
+    const storePhone = storeProfile.phone || "085753712624";
+    const storeLogoHtml = storeProfile.logo ? `<img src="${storeProfile.logo}" class="receipt-logo" alt="Logo"><br>` : ``;
+
+    // Teks Footer Garansi & Syarat
+    const defaultFooter = `GARANSI ${garansi} HARI\n\nSelama masa garansi barang/sparepart bermasalah silahkan hubungi kami. Kerusakan yang disebabkan pengguna bukan tanggung jawab kami. Terima kasih.`;
+    const storeFooter = storeProfile.footer || defaultFooter;
+
+    // Render HTML Nota persis sesuai desain
+    document.getElementById('notaDetailContent').innerHTML = `
+        <div id="printableArea">
+            <div class="receipt-header">
+                ${storeLogoHtml}
+                <h3 class="receipt-title">${storeName}</h3>
+                <p class="receipt-sub">${storeAddress}</p>
+                <p class="receipt-sub">${storePhone}</p>
+            </div>
+
+            <div class="receipt-row">
+                <span>Waktu Transaksi</span>
+                <b>${tglFormatted}</b>
+            </div>
+            <div class="receipt-row">
+                <span>Metode Pembayaran</span>
+                <b>${pay}</b>
+            </div>
+            <div class="receipt-row">
+                <span>No. Transaksi</span>
+                <b>${nota} <span style="color:green; font-weight:bold;">LUNAS</span></b>
+            </div>
+            <div class="receipt-row">
+                <span>Kepada</span>
+                <b>${nama}</b>
+            </div>
+            <div class="receipt-row">
+                <span>Petugas / Kasir</span>
+                <b>${petugas}</b>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-row" style="font-weight:bold;">
+                <span>Produk / Servis</span>
+                <span>Sub Total</span>
+            </div>
+            
+            <div style="font-size:13px; margin: 6px 0;">
+                <b>${tipe}</b><br>
+                <small style="color:#555;">Tindakan: ${tindakan}</small>
+            </div>
+            
+            <div class="receipt-row" style="font-size:12px; color:#555;">
+                <span>Jasa Pengerjaan</span>
+                <span>Rp ${formatRupiah(jasa)}</span>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-row" style="font-size:15px; font-weight:bold; color:#111;">
+                <span>TOTAL BAYAR</span>
+                <span>Rp ${formatRupiah(total)}</span>
+            </div>
+
+            <div class="receipt-footer">
+                ${storeFooter.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+    `;
+
+    openPage('notaDetailModal');
+}
+
+// 2. FUNGSI CETAK NOTA THERMAL (58mm & 80mm)
+function cetakNotaThermal(paperWidth = 58) {
+    const printableElement = document.getElementById('printableArea');
+    if (!printableElement) return;
+
+    const content = printableElement.innerHTML;
+    const windowWidth = paperWidth === 80 ? 420 : 320;
+    const printWindow = window.open('', '', `width=${windowWidth},height=600`);
+    
+    const fontSizeHeader = paperWidth === 80 ? '18px' : '16px';
+    const fontSizeBody = paperWidth === 80 ? '13px' : '11px';
+    const fontSizeFooter = paperWidth === 80 ? '11px' : '10px';
+
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Cetak Nota ${paperWidth}mm</title>
+                <style>
+                    @page { size: auto; margin: 0; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        font-size: ${fontSizeBody}; 
+                        margin: 5px; 
+                        color:#000; 
+                        width: ${paperWidth === 80 ? '78mm' : '56mm'}; 
+                    }
+                    .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+                    .receipt-logo { max-width: 70px; max-height: 70px; }
+                    .receipt-title { font-size: ${fontSizeHeader}; font-weight: bold; margin: 2px 0; }
+                    .receipt-sub { font-size: ${fontSizeBody}; margin: 2px 0; }
+                    .receipt-row { display: flex; justify-content: space-between; font-size: ${fontSizeBody}; margin-bottom: 4px; }
+                    .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
+                    .receipt-footer { font-size: ${fontSizeFooter}; text-align: center; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+}
+
+// 3. FUNGSI SHARE / DOWNLOAD NOTA SEBAGAI PNG
+async function bagikanNotaPNG() {
+    const element = document.getElementById('notaDetailContent');
+    if (!element) return;
+
+    try {
+        const canvas = await html2canvas(element, { scale: 2 });
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], "Nota_Transaksi.png", { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'Nota Transaksi IO ID STORE',
+                    text: 'Berikut adalah bukti nota transaksi Anda.',
+                    files: [file]
+                });
+            } else {
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'Nota_Transaksi.png';
+                a.click();
+                alert("Gambar nota telah berhasil diunduh ke laptop/HP Anda.");
+            }
+        }, 'image/png');
+    } catch (err) {
+        alert("Gagal mengonversi nota ke gambar: " + err.message);
+    }
+}

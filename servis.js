@@ -325,3 +325,337 @@ function renderGaransiList(query = "") {
         </div>
     `}).join('');
 }
+// =========================================================================
+// 🛡️ 1. FUNGSI RENDER DAFTAR GARANSI (DENGAN TOMBOL NOTA AKTIF)
+// =========================================================================
+function renderGaransiList(query = "") {
+    const div = document.getElementById('garansiList');
+    if (!div) return;
+
+    const q = query.toLowerCase().trim();
+    
+    // Ambil data servis lokal
+    const services = (typeof localServices !== 'undefined' && Array.isArray(localServices)) 
+        ? localServices 
+        : JSON.parse(localStorage.getItem('pos_services') || '[]');
+
+    // Filter hanya servis yang sudah Selesai / Diambil / Berhasil
+    const completedServices = services.filter(s => {
+        const st = String(s.Status || s.status || "");
+        return st.includes("Diambil") || st.includes("Berhasil") || st.includes("Selesai");
+    });
+
+    const filtered = completedServices.filter(item => {
+        const nota = String(item.No_Nota || item.no_nota || "").toLowerCase();
+        const nama = String(item.Nama_Pelanggan || item.nama_pelanggan || "").toLowerCase();
+        const tipe = String(item.Tipe_HP || item.tipe_hp || "").toLowerCase();
+        const hp = String(item.No_HP || item.no_hp || "").toLowerCase();
+        return nota.includes(q) || nama.includes(q) || tipe.includes(q) || hp.includes(q);
+    });
+
+    if (filtered.length === 0) { 
+        div.innerHTML = "<div class='p-4 text-center text-gray-500'>Tidak ada riwayat garansi.</div>"; 
+        return; 
+    }
+
+    const now = new Date();
+    div.innerHTML = filtered.map(item => {
+        // Ambil No Nota dengan fallback aman
+        const nota = String(item.No_Nota || item.no_nota || item.nota || "").trim();
+        const nama = item.Nama_Pelanggan || item.nama_pelanggan || "Tanpa Nama";
+        const tipe = item.Tipe_HP || item.tipe_hp || "-";
+        const hp = item.No_HP || item.no_hp || "-";
+        const garansiHari = parseInt(item.Garansi_Hari || item.garansi_hari) || 0;
+        const tglAmbilStr = item.Tgl_Ambil || item.tgl_ambil || item.Tgl_Masuk || item.tgl_masuk;
+
+        let statusGaransiHtml = "";
+        if (tglAmbilStr && tglAmbilStr !== "-") {
+            const tglAmbil = new Date(tglAmbilStr);
+            const tglExpired = new Date(tglAmbil);
+            tglExpired.setDate(tglExpired.getDate() + garansiHari);
+
+            const diffTime = tglExpired - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays >= 0) {
+                statusGaransiHtml = `<span class="garansi-aktif">🟢 GARANSI AKTIF (Sisa ${diffDays} Hari)</span>`;
+            } else {
+                statusGaransiHtml = `<span class="garansi-expired">🔴 KADALUWARSA (Expired ${Math.abs(diffDays)} Hari lalu)</span>`;
+            }
+        } else {
+            statusGaransiHtml = `<span class="garansi-expired">⚠️ Belum Diambil</span>`;
+        }
+
+        const tglIndo = typeof formatDateTimeIndo === 'function' ? formatDateTimeIndo(tglAmbilStr) : tglAmbilStr;
+
+        return `
+        <div class="item-row">
+            <b>[${nota}] ${tipe} (${nama})</b><br>
+            📞 No. HP: <b>${hp}</b><br>
+            🕒 Waktu Penyerahan: ${tglIndo}<br>
+            🛡️ Durasi Garansi: <b>${garansiHari} Hari</b><br>
+            Status Garansi: ${statusGaransiHtml}
+            <div style="margin-top:8px;">
+                <button type="button" class="btn-info btn-sm" onclick="bukaNotaDetail('${nota}')">📄 Lihat Nota Rincian</button>
+            </div>
+        </div>
+    `}).join('');
+}
+
+// =========================================================================
+// 📄 2. FUNGSI MEMBUKA MODAL DETAIL NOTA
+// =========================================================================
+function bukaNotaDetail(noNota) {
+    if (!noNota) {
+        alert("⚠️ Nomor Nota tidak ditemukan!");
+        return;
+    }
+
+    const services = (typeof localServices !== 'undefined' && Array.isArray(localServices)) 
+        ? localServices 
+        : JSON.parse(localStorage.getItem('pos_services') || '[]');
+
+    const targetNota = String(noNota).trim().toLowerCase();
+    const s = services.find(item => {
+        const itemNota = String(item.No_Nota || item.no_nota || item.nota || "").trim().toLowerCase();
+        return itemNota === targetNota;
+    });
+
+    if (!s) {
+        alert(`⚠️ Data nota "${noNota}" tidak ditemukan di memori lokal!`);
+        return;
+    }
+
+    const nota = s.No_Nota || s.no_nota || noNota;
+    const nama = s.Nama_Pelanggan || s.nama_pelanggan || "Pelanggan";
+    const tipe = s.Tipe_HP || s.tipe_hp || "Servis";
+    const tindakan = s.Sparepart_Diperbaiki || s.sparepart_diperbaiki || s.Tindakan || s.tindakan || s.Kerusakan || s.kerusakan || "-";
+    const jasa = parseFloat(s.Biaya_Jasa || s.biaya_jasa) || 0;
+    const total = parseFloat(s.Total_Biaya || s.total_biaya) || 0;
+    const garansi = s.Garansi_Hari || s.garansi_hari || 0;
+    const pay = s.Metode_Pembayaran || s.metode_pembayaran || "Cash / Tunai";
+    const rawTgl = s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || new Date().toISOString();
+
+    const fmtRupiah = (val) => (typeof formatRupiah === 'function') 
+        ? formatRupiah(val) 
+        : parseInt(val || 0).toLocaleString('id-ID');
+
+    const tglFormatted = (typeof formatDateTimeIndo === 'function') ? formatDateTimeIndo(rawTgl) : rawTgl;
+
+    let petugas = "AGUS AFRIYANTO";
+    if (typeof currentUser !== 'undefined' && currentUser && (currentUser.nama || currentUser.Nama_Staf)) {
+        petugas = currentUser.nama || currentUser.Nama_Staf;
+    }
+
+    let profile = {};
+    try {
+        profile = (typeof storeProfile !== 'undefined' && storeProfile && storeProfile.name) 
+            ? storeProfile 
+            : JSON.parse(localStorage.getItem('pos_store_profile') || '{}');
+    } catch(e) {}
+
+    const storeName = profile.name || "IO ID STORE";
+    const storeAddress = profile.address || "Sira Jaya (Menendang) kec. pengkadan";
+    const storePhone = profile.phone || "085753712624";
+    const storeLogoHtml = profile.logo ? `<img src="${profile.logo}" class="receipt-logo" alt="Logo" style="max-width:80px; margin:0 auto 6px auto; display:block;"><br>` : ``;
+    
+    const defaultFooter = `GARANSI ${garansi} HARI\n\nSelama masa garansi barang/sparepart bermasalah silahkan hubungi kami. Kerusakan yang disebabkan pengguna bukan tanggung jawab kami. Terima kasih.`;
+    const storeFooter = profile.footer || defaultFooter;
+
+    const container = document.getElementById('notaDetailContent');
+    if (!container) {
+        alert("⚠️ Elemen '#notaDetailContent' tidak ditemukan!");
+        return;
+    }
+
+    // Render Nota
+    container.innerHTML = `
+        <div id="printableArea">
+            <div class="receipt-header" style="text-align:center; border-bottom:2px dashed #bbb; padding-bottom:12px; margin-bottom:12px;">
+                ${storeLogoHtml}
+                <h3 class="receipt-title" style="font-size:18px; font-weight:bold; margin:0; color:#111;">${storeName}</h3>
+                <p class="receipt-sub" style="font-size:12px; color:#555; margin:2px 0;">${storeAddress}</p>
+                <p class="receipt-sub" style="font-size:12px; color:#555; margin:2px 0;">${storePhone}</p>
+            </div>
+
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>Waktu Transaksi</span>
+                <b>${tglFormatted}</b>
+            </div>
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>Metode Pembayaran</span>
+                <b>${pay}</b>
+            </div>
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>No. Transaksi</span>
+                <b>${nota} <span style="color:green; font-weight:bold;">LUNAS</span></b>
+            </div>
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>Kepada</span>
+                <b>${nama}</b>
+            </div>
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                <span>Petugas / Kasir</span>
+                <b>${petugas}</b>
+            </div>
+
+            <div class="receipt-divider" style="border-top:1px dashed #ccc; margin:10px 0;"></div>
+
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:6px;">
+                <span>Produk / Servis</span>
+                <span>Sub Total</span>
+            </div>
+            
+            <div style="font-size:13px; margin: 6px 0;">
+                <b>${tipe}</b><br>
+                <small style="color:#555;">Tindakan: ${tindakan}</small>
+            </div>
+            
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:12px; color:#555; margin-bottom:6px;">
+                <span>Jasa Pengerjaan</span>
+                <span>Rp ${fmtRupiah(jasa)}</span>
+            </div>
+
+            <div class="receipt-divider" style="border-top:1px dashed #ccc; margin:10px 0;"></div>
+
+            <div class="receipt-row" style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; color:#111;">
+                <span>TOTAL BAYAR</span>
+                <span>Rp ${fmtRupiah(total)}</span>
+            </div>
+
+            <div class="receipt-footer" style="font-size:11px; color:#666; text-align:center; margin-top:12px; border-top:1px solid #eee; padding-top:10px; white-space:pre-line;">
+                ${storeFooter.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+    `;
+
+    // Tampilkan Modal Nota
+    if (typeof openPage === 'function') {
+        openPage('notaDetailModal');
+    } else {
+        document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+        document.getElementById('notaDetailModal').classList.remove('hidden');
+    }
+}
+// =========================================================================
+// 🖨️ 1. FUNGSI CETAK NOTA THERMAL (58mm & 80mm)
+// =========================================================================
+function cetakNotaThermal(paperWidth = 58) {
+    const printElement = document.getElementById('printableArea') || document.getElementById('notaDetailContent');
+    if (!printElement) {
+        alert("⚠️ Konten nota tidak ditemukan!");
+        return;
+    }
+
+    const content = printElement.innerHTML;
+    const windowWidth = paperWidth === 80 ? 420 : 320;
+    
+    // Buka jendela baru untuk cetak
+    const printWindow = window.open('', '_blank', `width=${windowWidth},height=600`);
+    if (!printWindow) {
+        alert("⚠️ Pop-up diblokir browser! Harap izinkan Pop-up di pojok kanan atas browser Anda untuk mencetak.");
+        return;
+    }
+
+    const fontSizeHeader = paperWidth === 80 ? '16px' : '14px';
+    const fontSizeBody = paperWidth === 80 ? '12px' : '11px';
+    const fontSizeFooter = paperWidth === 80 ? '10px' : '9px';
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Cetak Nota ${paperWidth}mm</title>
+                <style>
+                    @page { size: auto; margin: 0; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        font-size: ${fontSizeBody}; 
+                        margin: 4px; 
+                        color: #000; 
+                        width: ${paperWidth === 80 ? '76mm' : '54mm'}; 
+                    }
+                    .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
+                    .receipt-logo { max-width: 60px; max-height: 60px; display: block; margin: 0 auto 4px auto; }
+                    .receipt-title { font-size: ${fontSizeHeader}; font-weight: bold; margin: 2px 0; }
+                    .receipt-sub { font-size: ${fontSizeBody}; margin: 1px 0; }
+                    .receipt-row { display: flex; justify-content: space-between; font-size: ${fontSizeBody}; margin-bottom: 4px; }
+                    .receipt-divider { border-top: 1px dashed #000; margin: 6px 0; }
+                    .receipt-footer { font-size: ${fontSizeFooter}; text-align: center; margin-top: 8px; border-top: 1px dashed #000; padding-top: 6px; white-space: pre-line; }
+                </style>
+            </head>
+            <body>
+                ${content}
+            </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Berikan jeda sebentar agar browser selesai memuat gaya CSS sebelum cetak
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 300);
+}
+
+// =========================================================================
+// 📤 2. FUNGSI SHARE / DOWNLOAD NOTA GAMBAR PNG
+// =========================================================================
+async function bagikanNotaPNG() {
+    const element = document.getElementById('notaDetailContent');
+    if (!element) {
+        alert("⚠️ Konten nota tidak ditemukan!");
+        return;
+    }
+
+    if (typeof html2canvas === 'undefined') {
+        alert("⚠️ Pustaka konversi gambar (html2canvas) belum terhubung! Pastikan koneksi internet aktif.");
+        return;
+    }
+
+    try {
+        // Konversi tampilan elemen HTML menjadi gambar Canvas tajam
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: "#ffffff"
+        });
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                alert("Gagal memproses gambar nota!");
+                return;
+            }
+
+            const fileName = `Nota_IO_ID_STORE.png`;
+            const file = new File([blob], fileName, { type: "image/png" });
+
+            // Jika diakses dari Handphone (Android/iOS)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Nota Transaksi IO ID STORE',
+                        text: 'Berikut adalah bukti nota transaksi Anda.',
+                        files: [file]
+                    });
+                } catch (shareErr) {
+                    // Pengguna membatalkan menu share
+                }
+            } else {
+                // Jika diakses dari Laptop / PC (Otomatis Download Gambar PNG)
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                alert("📷 Nota berhasil diunduh sebagai gambar PNG! Anda bisa langsung melampirkannya ke WhatsApp Web.");
+            }
+        }, 'image/png');
+    } catch (err) {
+        alert("Gagal membuat gambar nota: " + err.message);
+    }
+}
