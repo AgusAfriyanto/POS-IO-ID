@@ -9,10 +9,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- 📦 Pustaka Kamera Barcode HTML5-QRCode -->
+    <!-- 📦 MODUL SCANNER: Pustaka Kamera Barcode HTML5-QRCode -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     
-    <!-- 🖼️ Pustaka Konversi Nota ke PNG -->
+    <!-- 🖼️ MODUL KONVERSI NOTA KE PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -41,22 +41,80 @@
         .search-results { background: white; border: 1px solid #ccc; max-height: 150px; overflow-y: auto; border-radius: 8px; }
         .search-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; }
         .search-item:hover { background: #e9ecef; }
+        .badge-sku { background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
         .badge-tag { background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .stat-card { display: flex; justify-content: space-between; background: #e9ecef; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; }
+        .tab-btn { padding: 8px 12px; background: #ddd; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; }
+        .tab-btn.active { background: #007bff; color: white; }
+        .garansi-aktif { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+        .garansi-expired { background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
         .chk-box { width: 18px; height: 18px; margin-right: 8px; cursor: pointer; vertical-align: middle; }
         
-        /* STYLES MODAL SCANNER & PICKER POP-UP */
+        /* STYLES MODAL OVERLAY & PICKER */
         .modal-overlay {
           position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0,0,0,0.65); display: flex; justify-content: center; align-items: center;
+          background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
           z-index: 99999;
         }
         .modal-content-picker {
           background: #fff; padding: 20px; border-radius: 16px; text-align: left;
-          max-width: 460px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          max-width: 460px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.25);
         }
         .btn-scan-trigger {
           width: auto; padding: 10px 14px; margin-top: 6px; background-color: #17a2b8;
           display: inline-block; white-space: nowrap;
+        }
+
+        /* STYLES DESAIN NOTA */
+        .receipt-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #bbb;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .receipt-logo {
+            max-width: 90px;
+            max-height: 90px;
+            object-fit: contain;
+            margin-bottom: 6px;
+        }
+        .receipt-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            color: #111;
+        }
+        .receipt-sub {
+            font-size: 12px;
+            color: #555;
+            margin: 2px 0;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .receipt-divider {
+            border-top: 1px dashed #ccc;
+            margin: 10px 0;
+        }
+        .receipt-footer {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            white-space: pre-line;
         }
     </style>
 </head>
@@ -73,8 +131,10 @@
         <div id="message" style="margin-top: 10px; text-align: center;"></div>
     </div>
 
-    <!-- MENU UTAMA / DASHBOARD -->
+    <!-- MENU UTAMA / DASHBOARD MODERN GRID 2 KOLOM -->
     <div id="mainSection" class="hidden space-y-4">
+        
+        <!-- HEADER PROFIL USER & STATUS SYNC -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-11 h-11 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-base shadow-inner">
@@ -83,57 +143,282 @@
                 <div>
                     <h3 id="userGreeting" class="font-bold text-slate-800 text-base leading-tight m-0 text-left">Halo, User</h3>
                     <div class="flex items-center gap-2 mt-1">
-                        <span id="syncStatus" onclick="manualSync()" class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer">
+                        <span id="syncStatus" onclick="manualSync()" title="Klik untuk Sync Manual" class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer active:scale-95 transition">
                             ⚡ Off-line Ready
                         </span>
                     </div>
                 </div>
             </div>
-            <button onclick="logout()" title="Keluar" class="p-2 text-rose-500 bg-rose-50 rounded-xl border-none cursor-pointer w-auto mt-0">
+            <button onclick="logout()" title="Keluar" class="p-2 text-rose-500 hover:text-rose-700 active:scale-90 transition bg-rose-50 rounded-xl border-none cursor-pointer w-auto mt-0">
                 🚪
             </button>
         </div>
 
-        <!-- QUICK STATS -->
-        <div class="grid grid-cols-2 gap-3">
-            <div class="bg-blue-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
-                <div class="p-2.5 bg-white/20 rounded-xl text-lg">🔧</div>
-                <div class="text-left">
-                    <p class="text-[11px] text-blue-100 font-medium m-0">Servis Diproses</p>
-                    <p class="text-lg font-bold m-0" id="dashServisCount">0 Unit</p>
+        <!-- QUICK STATS RINGKASAN -->
+        <div>
+            <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider px-1 text-left">Quick Stats</h4>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-blue-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
+                    <div class="p-2.5 bg-white/20 rounded-xl text-lg">🔧</div>
+                    <div class="text-left">
+                        <p class="text-[11px] text-blue-100 font-medium m-0">Servis Diproses</p>
+                        <p class="text-lg font-bold m-0" id="dashServisCount">0 Unit</p>
+                    </div>
                 </div>
-            </div>
-            <div class="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
-                <div class="p-2.5 bg-white/20 rounded-xl text-lg">🛍️</div>
-                <div class="text-left">
-                    <p class="text-[11px] text-emerald-100 font-medium m-0">Penjualan Hari Ini</p>
-                    <p class="text-lg font-bold m-0" id="dashOmsetToday">Rp 0</p>
+                <div class="bg-emerald-600 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3">
+                    <div class="p-2.5 bg-white/20 rounded-xl text-lg">🛍️</div>
+                    <div class="text-left">
+                        <p class="text-[11px] text-emerald-100 font-medium m-0">Penjualan Hari Ini</p>
+                        <p class="text-lg font-bold m-0" id="dashOmsetToday">Rp 0</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- MENU UTAMA -->
-        <div class="grid grid-cols-2 gap-3">
-            <button class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center cursor-pointer" onclick="openPage('inventorySection'); renderInventoryList();">
-                <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📦</div>
-                <span class="text-xs font-bold text-slate-700">Kelola Stok & Barcode</span>
-            </button>
-            <button class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center cursor-pointer" onclick="openPage('settingsSection'); renderMasterCategoriesBrands();">
-                <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-2xl mb-2">⚙️</div>
-                <span class="text-xs font-bold text-slate-700">Pengaturan Master Data</span>
+        <!-- MENU UTAMA (GRID 2 KOLOM) -->
+        <div>
+            <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider px-1 text-left">Menu Utama</h4>
+            <div class="grid grid-cols-2 gap-3">
+
+                <!-- 1. Kasir & Penjualan -->
+                <button id="btnKasirPenjualan" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('kasirPenjualanSection'); renderReadyServiceList();">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛒</div>
+                    <span class="text-xs font-bold text-slate-700">Kasir & Penjualan</span>
+                </button>
+
+                <!-- 2. Input Servis Masuk -->
+                <button id="btnInputServis" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('formServisSection')">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🔧</div>
+                    <span class="text-xs font-bold text-slate-700">Input Servis Masuk</span>
+                </button>
+
+                <!-- 3. Status Pekerjaan Servis -->
+                <button id="btnStatusServis" class="role-teknisi role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('daftarServisSection'); renderServisList();">
+                    <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📋</div>
+                    <span class="text-xs font-bold text-slate-700">Status Servis</span>
+                </button>
+
+                <!-- 4. Cek & Tracking Garansi -->
+                <button id="btnGaransi" class="role-kasir role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('garansiSection'); renderGaransiList();">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛡️</div>
+                    <span class="text-xs font-bold text-slate-700">Cek & Garansi</span>
+                </button>
+
+                <!-- 5. Kelola Stok -->
+                <button id="menuStok" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('inventorySection'); renderInventoryList();">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📦</div>
+                    <span class="text-xs font-bold text-slate-700">Kelola Stok & Barcode</span>
+                </button>
+
+                <!-- 6. Laporan Keuangan -->
+                <button id="menuLaporan" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('reportSection'); loadFinancialReport();">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-2xl mb-2">📊</div>
+                    <span class="text-xs font-bold text-slate-700">Laporan Keuangan</span>
+                </button>
+
+                <!-- 7. Belanja Shopee & Email -->
+                <button id="menuShopee" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('shopeeSection'); renderShopeeQueue();">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-2">🛍️</div>
+                    <span class="text-xs font-bold text-slate-700">Sync Shopee & Email</span>
+                </button>
+
+                <!-- 8. Pengaturan Aplikasi -->
+                <button id="menuSettings" class="role-owner bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center active:scale-95 hover:shadow-md transition duration-150 w-full cursor-pointer" onclick="openPage('settingsSection'); loadStoreProfileInput(); renderUsersList(); renderMasterCategoriesBrands();">
+                    <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-2xl mb-2">⚙️</div>
+                    <span class="text-xs font-bold text-slate-700">Pengaturan Aplikasi</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- TOMBOL KELUAR -->
+        <div class="pt-2">
+            <button class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-2xl shadow-sm active:scale-95 transition text-sm flex items-center justify-center gap-2 border-none cursor-pointer" onclick="logout()">
+                🚪 Keluar
             </button>
         </div>
+
     </div>
 
-    <!-- KELOLA STOK -->
-    <div id="inventorySection" class="card hidden">
-        <h3>📦 Kelola Stok Barang</h3>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <button class="btn-success" style="flex: 1;" onclick="showAddManualModal()">➕ Tambah Barang Manual</button>
+    <!-- TRANSAKSI KASIR PENJUALAN -->
+    <div id="kasirPenjualanSection" class="card hidden">
+        <h3>🛍️ Transaksi Kasir & Penjualan</h3>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <input type="text" id="kasirItemSearch" placeholder="🔍 Scan Barcode / Ketik Barang / Ketik No. Nota..." onkeyup="searchKasirItem(this.value)">
+            <button type="button" class="btn-scan-trigger" onclick="bukaKameraScanner('kasir')">📷 Scan</button>
+        </div>
+        <div id="kasirSearchResults" class="search-results hidden"></div>
+
+        <h4 style="margin-top:15px;">Daftar Keranjang Belanja & Servis</h4>
+        <div id="kasirCartList"></div>
+
+        <div class="stat-card" style="margin-top:10px; background:#fff8dc; border:1px solid #ffe8a1;">
+            <span>Total Bayar:</span>
+            <span style="color:blue; font-size:16px;" id="dispTotalKasirCart">Rp 0</span>
         </div>
 
-        <!-- FILTER STOK -->
-        <div style="display:flex; gap:6px; margin-bottom: 12px;">
+        <label style="margin-top:10px; display:block;"><b>Metode Pembayaran:</b></label>
+        <select id="kasirPaymentMethod" onchange="toggleCashInput(this.value)">
+            <option value="Cash / Tunai">💵 Cash / Tunai</option>
+            <option value="Transfer QRIS">📲 Transfer / QRIS Bank</option>
+        </select>
+
+        <div id="cashInputGroup" style="margin-top:8px;">
+            <label><small><b>Nominal Uang Diterima (Rp):</b></small></label>
+            <input type="text" id="cashReceived" inputmode="numeric" pattern="[0-9]*" placeholder="Masukkan Jumlah Uang" oninput="formatRupiahInput(this); hitungKembalianKasir();">
+            <div class="stat-card" style="background:#d4edda; margin-top:5px;">
+                <span>Uang Kembalian:</span>
+                <span style="color:green;" id="dispKasirChange">Rp 0</span>
+            </div>
+        </div>
+
+        <button id="btnBayarKasir" class="btn-success" onclick="prosesBayarKasirRetailLokal()">🟢 Bayar & Pelunasan Servis (Instant)</button>
+        
+        <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+        
+        <h4>🔔 Antrean Servis Selesai (Siap Ambil)</h4>
+        <input type="text" id="searchReadyService" placeholder="🔍 Filter Nama / Tipe HP / Nota Selesai..." onkeyup="renderReadyServiceList(this.value)">
+        <div id="readyServiceQueueList" style="margin-top: 10px;"></div>
+
+        <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Batal / Kembali</button>
+    </div>
+
+    <!-- FORM INPUT SERVIS MASUK -->
+    <div id="formServisSection" class="card hidden">
+        <h3>📝 Form Servis Masuk</h3>
+        <input type="text" id="namaPelanggan" placeholder="Nama Pelanggan" oninput="cekNamaPelangganGanda(this.value)">
+        <div id="namaHint" style="font-size:12px; color:#d9534f; margin-bottom:5px;"></div>
+        <input type="text" id="noHp" placeholder="No. WhatsApp (cth: 08123456789)">
+        <input type="text" id="tipeHp" placeholder="Tipe HP (misal: Samsung A12)">
+        <textarea id="kerusakan" placeholder="Keterangan Kerusakan"></textarea>
+        
+        <button class="btn-success" onclick="simpanServisKasirLokal()">💾 Simpan Servis Masuk (Instant)</button>
+        <button class="btn-danger" onclick="goBack()">Kembali</button>
+    </div>
+
+    <!-- DAFTAR SERVIS -->
+    <div id="daftarServisSection" class="card hidden">
+        <h3>📋 Status Pekerjaan Servis</h3>
+        <input type="text" id="servisSearch" placeholder="🔍 Cari Nama / Tipe HP / No. Nota..." onkeyup="filterDaftarServis(this.value)">
+        <div id="servisList" style="margin-top: 10px;"></div>
+        <button class="btn-danger" onclick="goBack()">Kembali</button>
+    </div>
+
+    <!-- DETAIL NOTA BARU -->
+    <div id="notaDetailModal" class="card hidden" style="border:2px solid #17a2b8;">
+        <h3>📄 Detil Transaksi Nota</h3>
+        
+        <div id="notaDetailContent" class="receipt-card"></div>
+
+        <div style="display: flex; gap: 6px; margin-top: 15px;">
+            <button class="btn-info" style="flex: 1; margin-top: 0; font-size: 13px;" onclick="bagikanNotaPNG()">📤 Share PNG</button>
+            <button class="btn-success" style="flex: 1; margin-top: 0; font-size: 13px;" onclick="cetakNotaThermal(58)">🖨️ Cetak 58mm</button>
+            <button class="btn-purple" style="flex: 1; margin-top: 0; font-size: 13px;" onclick="cetakNotaThermal(80)">🖨️ Cetak 80mm</button>
+        </div>
+        <button class="btn-danger" style="width: 100%; margin-top: 10px;" onclick="goBack()">🛑 Tutup</button>
+    </div>
+
+    <!-- TRACKING GARANSI SERVIS -->
+    <div id="garansiSection" class="card hidden">
+        <h3>🛡️ Cek & Tracking Garansi Servis</h3>
+        <input type="text" id="garansiSearch" placeholder="🔍 Cari No. Nota / Tipe HP / Nama / No. HP..." onkeyup="renderGaransiList(this.value)">
+        <div id="garansiList" style="margin-top: 15px;"></div>
+        <button class="btn-danger" onclick="goBack()">Kembali</button>
+    </div>
+
+    <!-- MODUL PENGERJAAN SERVIS TEKNISI -->
+    <div id="teknisiModal" class="card hidden" style="border:2px solid #007bff;">
+        <h3>🛠️ Pengerjaan Servis Teknisi</h3>
+        <div id="teknisiInfo" style="background:#e9ecef; padding:10px; border-radius:5px; margin-bottom:10px;"></div>
+        
+        <h4>1. Sparepart Fisik dari Rak (Optional)</h4>
+        <div style="display: flex; gap: 5px; align-items: center;">
+            <input type="text" id="sparepartSearch" placeholder="🔍 Scan Barcode / Ketik Nama Barang..." onkeyup="searchSparepart(this.value)">
+            <button type="button" class="btn-scan-trigger" onclick="bukaKameraScanner('teknisi')">📷 Scan</button>
+        </div>
+        <div id="searchResults" class="search-results hidden"></div>
+        <div id="selectedSpareparts" style="margin-top: 10px;"></div>
+
+        <h4 style="margin-top:15px;">2. Tindakan / Pengerjaan Manual</h4>
+        <input type="text" id="tindakanManual" placeholder="Contoh: ACP CPU, Reball IC Power, Flash Firmware">
+
+        <h4 style="margin-top:15px;">3. Biaya Jasa & Garansi</h4>
+        <label><small><b>Biaya Jasa / Skill Pengerjaan (Rp):</b></small></label>
+        <input type="text" id="biayaJasa" inputmode="numeric" pattern="[0-9]*" placeholder="Masukkan Biaya Jasa" oninput="formatRupiahInput(this); hitungTotalTeknisi();">
+
+        <label><small><b>Garansi (Hari):</b></small></label>
+        <input type="number" id="garansiHari" placeholder="Misal: 7 atau 30">
+
+        <div class="stat-card" style="margin-top:10px; background:#fff8dc; border:1px solid #ffe8a1;">
+            <span>Total Transparan (Sparepart + Jasa):</span>
+            <span style="color:blue; font-size:16px;" id="dispTotalTeknisi">Rp 0</span>
+        </div>
+
+        <button class="btn-success" onclick="simpanPengerjaanTeknisiLokal()">💾 Simpan & Set Selesai (Instant)</button>
+        <button class="btn-danger" onclick="goBack()">Batal</button>
+    </div>
+
+    <!-- LAPORAN KEUANGAN & ANALISIS -->
+    <div id="reportSection" class="card hidden">
+        <h3>📊 Laporan & Analisis Konter</h3>
+        
+        <div style="margin-bottom: 12px; background:#e9ecef; padding:10px; border-radius:6px;">
+            <label><small><b>Filter Periode Keuangan:</b></small></label>
+            <select id="reportFilterRange" onchange="applyReportFilter()">
+                <option value="today">📅 Hari Ini</option>
+                <option value="month" selected>📅 Bulan Ini</option>
+                <option value="all">📅 Semua Waktu</option>
+                <option value="custom">📆 Custom Tanggal</option>
+            </select>
+            <div id="customDateRange" class="hidden" style="display:flex; gap:5px; margin-top:5px;">
+                <input type="date" id="startDate" onchange="applyReportFilter()">
+                <input type="date" id="endDate" onchange="applyReportFilter()">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="tab-btn active" id="btnTab1" onclick="switchReportTab(1)">💰 Keuangan</button>
+            <button class="tab-btn" id="btnTab2" onclick="switchReportTab(2)">🔥 Terlaris</button>
+            <button class="tab-btn" id="btnTab3" onclick="switchReportTab(3)">🐢 Ngendap (>60 Hari)</button>
+            <button class="tab-btn" id="btnTab4" onclick="switchReportTab(4)">👑 Pelanggan Setia</button>
+        </div>
+
+        <div id="tabKeuangan">
+            <div class="stat-card"><span>Total Omset Lunas:</span><span style="color: green;" id="statOmset">Rp 0</span></div>
+            <div class="stat-card" style="font-size:12px; padding-left:20px;"><span>└ Cash/Tunai:</span><span id="statCash">Rp 0</span></div>
+            <div class="stat-card" style="font-size:12px; padding-left:20px;"><span>└ Transfer QRIS:</span><span id="statQris">Rp 0</span></div>
+            <div class="stat-card"><span>Laba Kotor Jasa & Barang:</span><span style="color: #28a745;" id="statLabaKotor">Rp 0</span></div>
+            <div class="stat-card"><span>Total Pengeluaran Operasional:</span><span style="color: red;" id="statExp">Rp 0</span></div>
+            <div class="stat-card" style="font-size: 16px; background:#d4edda; border:1px solid #c3e6cb;"><span>Laba Bersih Akhir:</span><span style="color: blue;" id="statLaba">Rp 0</span></div>
+        </div>
+        
+        <div id="tabTerlaris" class="hidden"><div id="topProductsList"></div></div>
+        <div id="tabNgendap" class="hidden"><div id="deadStockList"></div></div>
+        
+        <div id="tabPelanggan" class="hidden">
+            <div style="margin-bottom: 10px;">
+                <label><small><b>Urutkan Berdasarkan:</b></small></label>
+                <select id="customerSortFilter" onchange="applyReportFilter()">
+                    <option value="freq">🔄 Paling Sering Datang (Frekuensi)</option>
+                    <option value="val">💰 Nominal Belanja Tertinggi (Value)</option>
+                </select>
+            </div>
+            <div id="topCustomersList"></div>
+        </div>
+
+        <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
+    </div>
+
+    <!-- KELOLA STOK & CETAK BARCODE -->
+    <div id="inventorySection" class="card hidden">
+        <h3>📦 Kelola Stok & Cetak Barcode</h3>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn-success" style="flex: 1;" onclick="showAddManualModal()">➕ Tambah Barang Manual</button>
+            <button class="btn-warning" style="flex: 1;" onclick="cetakBarcodeModal()">🖨️ Cetak Barcode</button>
+        </div>
+
+        <!-- FILTER STOK KATEGORI & MEREK -->
+        <div style="margin-top:12px; display:flex; gap:6px;">
             <select id="filterInvCategory" onchange="renderInventoryList()" style="margin:0; font-size:12px;">
                 <option value="">📁 Semua Kategori</option>
             </select>
@@ -142,18 +427,25 @@
             </select>
         </div>
 
-        <div id="inventoryList"></div>
-        <button class="btn-danger" style="margin-top:15px;" onclick="goBack()">Kembali</button>
+        <div style="margin-top: 12px; background: #e9ecef; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-weight: bold; cursor: pointer; margin:0;">
+                <input type="checkbox" id="selectAllInv" class="chk-box" onchange="toggleSelectAllInventory(this.checked)"> Pilih Semua
+            </label>
+            <button class="btn-danger btn-sm" onclick="hapusTerpilihLokal()" style="margin: 0;">🗑️ Hapus Dipilih</button>
+        </div>
+
+        <div id="inventoryList" style="margin-top: 10px;"></div>
+        <button class="btn-danger" onclick="goBack()">Kembali</button>
     </div>
 
     <!-- MODUL TAMBAH BARANG MANUAL (DENGAN POP-UP PICKER) -->
     <div id="addManualModal" class="card hidden" style="border:2px solid #28a745;">
         <h3>➕ Tambah Barang Stok Manual</h3>
         
-        <!-- KOLOM PEMILIHAN KATEGORI & MEREK DENGAN POP-UP -->
+        <!-- KOLOM PEMILIHAN KATEGORI & MEREK VIA POP-UP PICKER -->
         <label><small><b>1 & 2. Klasifikasi Produk (Kategori & Merek):</b></small></label>
         <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
-            <input type="text" id="manualKategoriBrandDisplay" placeholder="Belum Dipilih (Klik Tombol Pilihan ➔)" readonly style="background:#e9ecef; cursor:not-allowed; font-weight:bold; color:#007bff;">
+            <input type="text" id="manualKategoriBrandDisplay" placeholder="Belum Dipilih (Klik Tombol ➔)" readonly style="background:#e9ecef; cursor:not-allowed; font-weight:bold; color:#007bff;">
             <button type="button" class="btn-info" style="width: auto; margin:0; padding:10px 14px; white-space:nowrap;" onclick="bukaModalPicker()">🪟 Pilih / Tambah</button>
         </div>
         
@@ -171,10 +463,10 @@
         <input type="text" id="manualNama" placeholder="Contoh: LCD iPhone 11 / Charger 25W">
         
         <label><small><b>5. HPP / Modal (Rp):</b></small></label>
-        <input type="text" id="manualHpp" placeholder="HPP / Modal (Rp)" oninput="formatRupiahInput(this)">
+        <input type="text" id="manualHpp" inputmode="numeric" pattern="[0-9]*" placeholder="HPP / Modal (Rp)" oninput="formatRupiahInput(this)">
         
         <label><small><b>6. Harga Jual (Rp):</b></small></label>
-        <input type="text" id="manualHargaJual" placeholder="Harga Jual (Rp)" oninput="formatRupiahInput(this)">
+        <input type="text" id="manualHargaJual" inputmode="numeric" pattern="[0-9]*" placeholder="Harga Jual (Rp)" oninput="formatRupiahInput(this)">
         
         <label><small><b>7. Jumlah Stok:</b></small></label>
         <input type="number" id="manualStok" placeholder="Jumlah Stok" value="1">
@@ -183,17 +475,128 @@
         <button class="btn-danger" onclick="closeAddManualModal()">Batal</button>
     </div>
 
-    <!-- PENGATURAN MASTER DATA -->
-    <div id="settingsSection" class="card hidden">
-        <h3>⚙️ Pengaturan Master Data</h3>
+    <!-- MODUL EDIT BARANG STOK -->
+    <div id="editItemModal" class="card hidden" style="border:2px solid #ffc107;">
+        <h3>✏️ Edit Data Barang Stok</h3>
+        <input type="hidden" id="editSku">
+        
+        <label><small><b>Kategori:</b></small></label>
+        <input type="text" id="editKategori" list="categoryDatalist" placeholder="Kategori">
+
+        <label><small><b>Merek:</b></small></label>
+        <input type="text" id="editMerek" list="brandDatalist" placeholder="Merek">
+
+        <label><small><b>Barcode Pabrik:</b></small></label>
+        <input type="text" id="editBarcodePabrik" placeholder="Barcode Pabrik">
+        
+        <label><small><b>Nama Barang:</b></small></label>
+        <input type="text" id="editNama" placeholder="Nama Barang">
+        
+        <label><small><b>HPP (Rp):</b></small></label>
+        <input type="text" id="editHpp" inputmode="numeric" pattern="[0-9]*" placeholder="HPP (Rp)" oninput="formatRupiahInput(this)">
+        
+        <label><small><b>Harga Jual (Rp):</b></small></label>
+        <input type="text" id="editHargaJual" inputmode="numeric" pattern="[0-9]*" placeholder="Harga Jual (Rp)" oninput="formatRupiahInput(this)">
+        
+        <label><small><b>Jumlah Stok:</b></small></label>
+        <input type="number" id="editStok" placeholder="Stok">
+        
+        <button class="btn-success" onclick="simpanEditBarangLokal()">💾 Update Barang</button>
+        <button class="btn-danger" onclick="closeEditModal()">Batal</button>
+    </div>
+
+    <!-- BELANJA SHOPEE & SYNC EMAIL -->
+    <div id="shopeeSection" class="card hidden">
+        <h3>🛒 Belanja Shopee & Sync Email</h3>
+        
         <div class="item-row" style="background:#e9ecef;">
-            <h4>➕ Tambah Kategori / Merek Baru</h4>
-            <input type="text" id="newCatName" placeholder="Kategori (cth: LCD, Charger, Minuman)">
-            <input type="text" id="newBrandName" placeholder="Merek (cth: OG, Mitu, Anker, Teh Botol)">
-            <button class="btn-success" onclick="simpanMasterCategoryBrand()">💾 Tambah ke Master Data</button>
+            <h4>1. Catat Pengeluaran Belanja (Form 1)</h4>
+            <input type="text" id="shopeeNoPesanan" placeholder="No. Pesanan Shopee (cth: 260908GSQK7Y69)">
+            <input type="text" id="shopeeNominal" inputmode="numeric" pattern="[0-9]*" placeholder="Total Belanja (Rp)" oninput="formatRupiahInput(this)">
+            <input type="text" id="shopeeKet" placeholder="Keterangan (misal: LCD & Flexible)">
+            <button class="btn-success" onclick="simpanPengeluaranShopeeLokal()">💸 Catat Pengeluaran & Daftarkan Antrean</button>
         </div>
-        <h4>Daftar Master Terdaftar</h4>
-        <div id="masterCategoryBrandList"></div>
+
+        <h4>2. Antrean Paket & Verifikasi Email (Form 2)</h4>
+        <div id="shopeeQueueList"></div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+
+        <h4>⏳ 3. Antrean Konfirmasi Barang Baru (Draft)</h4>
+        <div id="pendingDraftList"></div>
+
+        <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
+    </div>
+
+    <!-- HALAMAN PENGATURAN APLIKASI -->
+    <div id="settingsSection" class="card hidden">
+        <h3>⚙️ Pengaturan Aplikasi</h3>
+
+        <div style="display: flex; gap: 5px; margin-bottom: 15px; flex-wrap:wrap;">
+            <button class="tab-btn active" id="btnSetTab1" onclick="switchSettingsTab(1)">📝 Profil & Nota</button>
+            <button class="tab-btn" id="btnSetTab2" onclick="switchSettingsTab(2)">👥 Staf / User</button>
+            <button class="tab-btn" id="btnSetTab3" onclick="switchSettingsTab(3)">📁 Kategori & Merek</button>
+        </div>
+
+        <!-- TAB 1: KELOLA NOTA DAN PROFIL TOKO -->
+        <div id="tabProfilNota">
+            <div class="item-row" style="background:#f8f9fa;">
+                <h4>📋 Informasi Nota & Header Toko</h4>
+                <label><small><b>Nama Toko / Konter:</b></small></label>
+                <input type="text" id="setStoreName" placeholder="Contoh: IO ID STORE">
+
+                <label><small><b>Alamat Lengkap Toko:</b></small></label>
+                <input type="text" id="setStoreAddress" placeholder="Contoh: Sira Jaya (Menendang) kec. pengkadan">
+
+                <label><small><b>Nomor HP / WhatsApp Toko:</b></small></label>
+                <input type="text" id="setStorePhone" placeholder="Contoh: 085753712624">
+
+                <label><small><b>Upload Logo Toko dari HP/Komputer:</b></small></label>
+                <input type="file" id="setStoreLogoFile" accept="image/*" onchange="konversiLogoToBase64(this)">
+                <input type="hidden" id="setStoreLogo">
+                <div id="previewLogoContainer" style="margin-top: 5px;"></div>
+
+                <label style="margin-top: 10px; display: block;"><small><b>Catatan Kaki (Footer Nota & Syarat Garansi):</b></small></label>
+                <textarea id="setStoreFooter" rows="4" placeholder="Tuliskan pesan terima kasih atau syarat garansi di sini..."></textarea>
+
+                <button class="btn-success" onclick="simpanProfilToko()">💾 Simpan Pengaturan Nota</button>
+            </div>
+        </div>
+
+        <!-- TAB 2: KELOLA STAF -->
+        <div id="tabKelolaStaf" class="hidden">
+            <div class="item-row" style="background:#e9ecef;">
+                <h4>Tambah Staf Baru (Auto User ID)</h4>
+                <input type="text" id="newNama" placeholder="Nama Staf">
+                <select id="newRole">
+                    <option value="Teknisi">Teknisi (Kode TK-xxx)</option>
+                    <option value="Kasir">Kasir / Karyawan (Kode KS-xxx)</option>
+                    <option value="Owner">Owner / Admin (Kode OWN-xxx)</option>
+                </select>
+                <input type="password" id="newPin" placeholder="Buat PIN / Password">
+                <button class="btn-success" onclick="simpanUserBaru()">💾 Buat Akun Staf</button>
+            </div>
+            <h4>Daftar Staf Terdaftar</h4>
+            <div id="userList"></div>
+        </div>
+
+        <!-- TAB 3: KELOLA MASTER KATEGORI & MEREK -->
+        <div id="tabMasterCategoryBrand" class="hidden">
+            <div class="item-row" style="background:#e9ecef;">
+                <h4>➕ Tambah Kategori / Merek Baru</h4>
+                <label><small><b>Kategori:</b></small></label>
+                <input type="text" id="newCatName" placeholder="Contoh: LCD, Charger, Baterai">
+                
+                <label><small><b>Merek (Terikat Kategori):</b></small></label>
+                <input type="text" id="newBrandName" placeholder="Contoh: OG, Mitu, Anker, Vivan">
+                
+                <button class="btn-success" onclick="simpanMasterCategoryBrand()">💾 Tambah ke Master Data</button>
+            </div>
+
+            <h4>Daftar Master Kategori & Merek Terdaftar</h4>
+            <div id="masterCategoryBrandList"></div>
+        </div>
+
         <button class="btn-danger" style="margin-top: 15px;" onclick="goBack()">Kembali</button>
     </div>
 
@@ -229,7 +632,7 @@
     <!-- MODAL SCANNER KAMERA -->
     <div id="modalScanner" class="modal-overlay hidden">
         <div class="modal-content-picker" style="text-align:center;">
-            <h3>📷 Pindai Barcode Pabrik</h3>
+            <h3>📷 Pindai Barcode / QR</h3>
             <div id="reader-kamera" style="width: 100%; max-width: 380px; margin: 0 auto;"></div>
             <button type="button" class="btn-danger" onclick="tutupKameraScanner()" style="margin-top:15px;">Tutup Kamera</button>
         </div>
@@ -241,29 +644,136 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbyDfKb-vjfbJGglA3axZjr5R8cIj4hA2e7rtFGZFU9Pw80gRw0U2N69w3LkvBtmqWA4aA/exec";
 
     let currentUser = null;
+    let localServices = JSON.parse(localStorage.getItem('pos_services') || '[]');
     let localInventory = JSON.parse(localStorage.getItem('pos_inventory') || '[]');
+    let localExpenses = JSON.parse(localStorage.getItem('pos_expenses') || '[]');
+    let localUsers = JSON.parse(localStorage.getItem('pos_users') || '[]');
+    let localDrafts = JSON.parse(localStorage.getItem('pos_drafts') || '[]');
     let localMasterCategories = JSON.parse(localStorage.getItem('pos_categories') || '["LCD", "Charger", "Kabel", "Baterai", "Aksesoris"]');
     let localMasterBrands = JSON.parse(localStorage.getItem('pos_brands') || '[{"category":"LCD","brand":"OG"},{"category":"LCD","brand":"Mitu"},{"category":"Charger","brand":"Anker"},{"category":"Charger","brand":"Vivan"}]');
+    let storeProfile = JSON.parse(localStorage.getItem('pos_store_profile') || '{}');
+    let kasirCart = [];
 
-    // FORMAT ANGKA
+    let selectedSparepartList = [];
+    let selectedServiceForTeknisi = null;
+    let calculatedTotalTeknisi = 0;
+
+    // 🗓️ FORMAT TANGGAL LOKAL BROWSER/HP (WIB / YYYY-MM-DD)
+    function getLocalDateString(dateInput = new Date()) {
+        if (!dateInput || dateInput === "-") return "";
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return String(dateInput).split('T')[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // UPDATE QUICK STATS DASHBOARD (MURNI TANGGAL LOKAL WIB)
+    function updateQuickStats() {
+        const prosesCount = localServices.filter(s => (s.Status || s.status) === 'Proses').length;
+        const todayStr = getLocalDateString();
+        let todayOmset = 0;
+
+        localServices.filter(s => {
+            const st = String(s.Status || s.status || "");
+            const tgl = getLocalDateString(s.Tgl_Ambil || s.tgl_ambil || s.Tgl_Masuk || s.tgl_masuk || "");
+            return (st.includes("Diambil") || st.includes("Berhasil")) && tgl === todayStr;
+        }).forEach(s => todayOmset += parseFloat(s.Total_Biaya || s.total_biaya || 0));
+
+        const elServis = document.getElementById('dashServisCount');
+        const elOmset = document.getElementById('dashOmsetToday');
+        if(elServis) elServis.innerText = `${prosesCount} Unit`;
+        if(elOmset) elOmset.innerText = `Rp ${formatRupiah(todayOmset)}`;
+    }
+
+    // AUTO-SYNC / MANUAL SYNC ENGINE
+    let syncTimeout = null;
+    function triggerAutoSyncBackground(isImmediate = false) {
+        const badge = document.getElementById('syncStatus');
+        if(badge) {
+            badge.innerText = "🔄 Syncing...";
+            badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
+        }
+        
+        clearTimeout(syncTimeout);
+        
+        const runSync = async () => {
+            if (!navigator.onLine) {
+                if(badge) {
+                    badge.innerText = "⚡ Off-line Ready";
+                    badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 cursor-pointer";
+                }
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "syncBulkData",
+                        services: localServices,
+                        inventory: localInventory,
+                        expenses: localExpenses
+                    })
+                });
+                const res = await response.json();
+                if(res.status === "success" && badge) {
+                    badge.innerText = "⚡ Off-line Ready";
+                    badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer";
+                }
+            } catch(e) {
+                if(badge) {
+                    badge.innerText = "⚠️ Offline Mode";
+                    badge.className = "inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 cursor-pointer";
+                }
+            }
+        };
+
+        if(isImmediate) runSync();
+        else syncTimeout = setTimeout(runSync, 2000);
+    }
+
+    async function manualSync() {
+        await fetchMasterDataBackground();
+        alert("🔄 Data berhasil disinkronkan dengan Google Sheets!");
+    }
+
+    // FUNGSI PEMBANTU FORMAT RIBUAN
     function formatRupiahInput(input) {
         let val = input.value.replace(/\D/g, '');
-        input.value = val === '' ? '' : parseInt(val, 10).toLocaleString('id-ID');
+        if (val === '') {
+            input.value = '';
+            return;
+        }
+        input.value = parseInt(val, 10).toLocaleString('id-ID');
     }
+
     function parseRawNumber(elementId) {
         let el = document.getElementById(elementId);
-        return el ? (parseFloat(el.value.replace(/\./g, '').replace(/\D/g, '')) || 0) : 0;
+        if (!el) return 0;
+        let val = el.value.replace(/\./g, '').replace(/\D/g, '');
+        return parseFloat(val) || 0;
     }
+
     function formatRupiah(a) { return (!a && a !== 0) ? "0" : parseInt(a).toLocaleString('id-ID'); }
 
-    // NAVIGASI PAGE
-    function openPage(pageId) {
-        document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
-        document.getElementById(pageId).classList.remove('hidden');
-    }
-    function goBack() { openPage('mainSection'); }
+    function formatDateTimeIndo(isoString) {
+        if (!isoString || isoString === "-") return "-";
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return isoString;
 
-    // 🪟 LOGIKA POP-UP PICKER (KATEGORI & MEREK)
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes} WIB`;
+    }
+
+    // POP-UP PICKER (KATEGORI & MEREK) LOGIK
     function bukaModalPicker() {
         populatePickerCategories();
         document.getElementById('modalPicker').classList.remove('hidden');
@@ -275,15 +785,20 @@
 
     function populatePickerCategories() {
         const catSelect = document.getElementById('pickerCategorySelect');
+        if (!catSelect) return;
         catSelect.innerHTML = `<option value="">-- Pilih Kategori --</option>` + 
             localMasterCategories.map(c => `<option value="${c}">${c}</option>`).join('');
         
-        document.getElementById('pickerBrandSelect').innerHTML = `<option value="">-- Pilih Merek --</option>`;
+        const brandSelect = document.getElementById('pickerBrandSelect');
+        if (brandSelect) {
+            brandSelect.innerHTML = `<option value="">-- Pilih Merek --</option>`;
+        }
     }
 
     function onPickerCategoryChange() {
         const selectedCat = document.getElementById('pickerCategorySelect').value;
         const brandSelect = document.getElementById('pickerBrandSelect');
+        if (!brandSelect) return;
 
         if (!selectedCat) {
             brandSelect.innerHTML = `<option value="">-- Pilih Merek --</option>`;
@@ -344,7 +859,6 @@
         tutupModalPicker();
     }
 
-    // SIMPAN MASTER DATA KE LOCALSTORAGE
     function saveMasterData() {
         localStorage.setItem('pos_categories', JSON.stringify(localMasterCategories));
         localStorage.setItem('pos_brands', JSON.stringify(localMasterBrands));
@@ -365,10 +879,301 @@
         }
     }
 
-    // SIMPAN BARANG STOK MANUAL
+    // SCANNER KAMERA
+    let html5QrCode = null;
+    let activeScannerTarget = "";
+
+    function bukaKameraScanner(targetMode) {
+        activeScannerTarget = targetMode;
+        document.getElementById('modalScanner').classList.remove('hidden');
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader-kamera");
+        }
+
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+                handleHasilScanKamera(decodedText);
+            },
+            (errorMessage) => {}
+        ).catch(err => {
+            alert("Gagal mengaktifkan kamera: " + err);
+            document.getElementById('modalScanner').classList.add('hidden');
+        });
+    }
+
+    function tutupKameraScanner() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('modalScanner').classList.add('hidden');
+            }).catch(err => {
+                document.getElementById('modalScanner').classList.add('hidden');
+            });
+        } else {
+            document.getElementById('modalScanner').classList.add('hidden');
+        }
+    }
+
+    function handleHasilScanKamera(kodeScan) {
+        tutupKameraScanner();
+        const kodeClean = String(kodeScan).trim().toLowerCase();
+
+        if (activeScannerTarget === 'kasir') {
+            const itemDitemukan = localInventory.find(i => 
+                String(i.sku || i.SKU || "").toLowerCase() === kodeClean ||
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").toLowerCase() === kodeClean
+            );
+
+            if (itemDitemukan) {
+                addKasirCartItem(itemDitemukan.sku || itemDitemukan.SKU);
+            } else {
+                alert(`⚠️ Barang dengan barcode "${kodeScan}" tidak ditemukan di inventaris!`);
+            }
+        } 
+        else if (activeScannerTarget === 'teknisi') {
+            document.getElementById('sparepartSearch').value = kodeScan;
+            searchSparepart(kodeScan);
+        } 
+        else if (activeScannerTarget === 'tambahManual') {
+            const itemAda = localInventory.find(i => 
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").toLowerCase() === kodeClean ||
+                String(i.sku || i.SKU || "").toLowerCase() === kodeClean
+            );
+
+            if (itemAda) {
+                alert(`⚠️ Barcode ini sudah terdaftar pada barang: "${itemAda.nama_barang || itemAda.Nama_Barang}" (${itemAda.merek || itemAda.Merek || '-'})!`);
+            }
+            
+            document.getElementById('manualBarcodePabrik').value = kodeScan;
+            document.getElementById('manualNama').focus();
+        }
+    }
+
+    // NAVIGASI PAGE & HISTORY BROWSER
+    function openPage(pageId) {
+        document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+        document.getElementById(pageId).classList.remove('hidden');
+        history.pushState({ page: pageId }, '', '#' + pageId);
+    }
+
+    function goBack() {
+        if(window.history.length > 1) {
+            history.back();
+        } else {
+            showMainMenu();
+        }
+    }
+
+    window.onpopstate = function(event) {
+        document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+        if (event.state && event.state.page) {
+            document.getElementById(event.state.page).classList.remove('hidden');
+        } else {
+            showMainMenu();
+        }
+    };
+
+    function showMainMenu() {
+        document.querySelectorAll('.card, #mainSection').forEach(el => el.classList.add('hidden'));
+        if(currentUser) {
+            document.getElementById('mainSection').classList.remove('hidden');
+            updateQuickStats();
+        } else {
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+    }
+
+    function saveAllLocal() {
+        localStorage.setItem('pos_services', JSON.stringify(localServices));
+        localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
+        localStorage.setItem('pos_expenses', JSON.stringify(localExpenses));
+        localStorage.setItem('pos_users', JSON.stringify(localUsers));
+        localStorage.setItem('pos_drafts', JSON.stringify(localDrafts));
+        saveMasterData();
+        localStorage.setItem('pos_store_profile', JSON.stringify(storeProfile));
+        updateQuickStats();
+        triggerAutoSyncBackground();
+    }
+
+    window.onload = function() {
+        fetchMasterDataBackground();
+        populateFilterDropdowns();
+
+        const savedUser = localStorage.getItem('pos_user');
+        if(savedUser) {
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+            applyRolePermissions();
+            updateQuickStats();
+        }
+
+        setInterval(() => {
+            if (currentUser && navigator.onLine) {
+                fetchMasterDataBackground();
+            }
+        }, 30000);
+    };
+
+    async function fetchMasterDataBackground() {
+        if (!navigator.onLine) return;
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getAllMasterData" })
+            });
+            const res = await response.json();
+            if(res.status === "success") {
+                if(res.inventory && res.inventory.length > 0) localInventory = res.inventory;
+                if(res.services && res.services.length > 0) localServices = res.services;
+                if(res.expenses && res.expenses.length > 0) localExpenses = res.expenses;
+                if(res.users && res.users.length > 0) localUsers = res.users;
+
+                saveAllLocal();
+            }
+        } catch(e){}
+    }
+
+    // LOGIN & USER MANAGEMENT
+    async function login() {
+        const user_id = document.getElementById('userId').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const msg = document.getElementById('message');
+
+        if(!user_id || !password) {
+            msg.style.color = "red";
+            msg.innerText = "Isi User ID dan Password!";
+            return;
+        }
+
+        msg.style.color = "blue";
+        msg.innerText = "Memeriksa...";
+
+        let found = localUsers.find(u => 
+            String(u.id || u.User_ID || u[0]).toLowerCase() === user_id.toLowerCase() && 
+            String(u.pin || u.PIN || u.Password || u[3]) === password
+        );
+
+        if (!found) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "login", user_id: user_id, password: password })
+                });
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    currentUser = result.user;
+                    localStorage.setItem('pos_user', JSON.stringify(currentUser));
+                    await fetchMasterDataBackground();
+
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('mainSection').classList.remove('hidden');
+                    document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+                    applyRolePermissions();
+                    updateQuickStats();
+                    msg.innerText = "";
+                    return;
+                } else {
+                    msg.style.color = "red";
+                    msg.innerText = result.message;
+                    return;
+                }
+            } catch (err) {
+                msg.style.color = "red";
+                msg.innerText = "Gagal terhubung ke server!";
+                return;
+            }
+        }
+
+        currentUser = { 
+            id: found.id || found.User_ID || found[0], 
+            nama: found.nama || found.Nama_Staf || found[1], 
+            role: found.role || found.Role || found[2] 
+        };
+        localStorage.setItem('pos_user', JSON.stringify(currentUser));
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('mainSection').classList.remove('hidden');
+        document.getElementById('userGreeting').innerText = `Halo, ${currentUser.nama} (${currentUser.role}) 👋`;
+        applyRolePermissions();
+        updateQuickStats();
+        msg.innerText = "";
+    }
+
+    function logout() { 
+        localStorage.removeItem('pos_user'); 
+        currentUser = null; 
+        document.getElementById('mainSection').classList.add('hidden'); 
+        document.getElementById('loginSection').classList.remove('hidden'); 
+    }
+
+    // MANAJEMEN STOK & INVENTARIS
+    function renderInventoryList() {
+        const listDiv = document.getElementById('inventoryList');
+        const selChkAll = document.getElementById('selectAllInv');
+        if (selChkAll) selChkAll.checked = false;
+
+        const selCat = document.getElementById('filterInvCategory') ? document.getElementById('filterInvCategory').value : "";
+        const selBrand = document.getElementById('filterInvBrand') ? document.getElementById('filterInvBrand').value : "";
+
+        let filtered = localInventory;
+        if (selCat) {
+            filtered = filtered.filter(i => String(i.kategori || i.Kategori || "").toLowerCase() === selCat.toLowerCase());
+        }
+        if (selBrand) {
+            filtered = filtered.filter(i => String(i.merek || i.Merek || "").toLowerCase() === selBrand.toLowerCase());
+        }
+
+        if(filtered.length === 0) {
+            listDiv.innerHTML = "<p style='text-align:center; color:#777;'>Belum ada stok barang yang sesuai filter.</p>";
+            return;
+        }
+
+        listDiv.innerHTML = filtered.map(item => {
+            const sku = item.sku || item.SKU || "-";
+            const kat = item.kategori || item.Kategori || "Umum";
+            const mrk = item.merek || item.Merek || "-";
+            const barcodePabrik = item.barcode_pabrik || item.Barcode_Pabrik || "-";
+            const nama = item.nama_barang || item.Nama_Barang || "-";
+            const hpp = item.hpp || item.HPP || 0;
+            const jual = item.harga_jual || item.Harga_Jual || 0;
+            const stok = item.stok || item.Stok || 0;
+
+            return `
+            <div class="item-row" style="display:flex; align-items:center;">
+                <input type="checkbox" class="chk-box item-chk" data-sku="${sku}">
+                <div style="flex:1;">
+                    <div style="margin-bottom:2px;">
+                        <span class="badge-tag">${kat}</span>
+                        <span class="badge-tag" style="background:#dbeafe; color:#1e40af;">${mrk}</span>
+                    </div>
+                    <b>[${sku}] ${nama}</b><br>
+                    <small style="color:#555;">Barcode Pabrik: <b>${barcodePabrik}</b></small><br>
+                    Stok: <b>${stok}</b> | HPP: Rp ${formatRupiah(hpp)} | Jual: Rp ${formatRupiah(jual)}
+                    <div style="margin-top:5px;">
+                        <button class="btn-warning btn-sm" onclick="bukaModalEditBarang('${sku}')">✏️ Edit</button>
+                        <button class="btn-danger btn-sm" onclick="hapusBarangLokal('${sku}')">🗑️ Hapus</button>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+    }
+
+    function showAddManualModal() { 
+        openPage('addManualModal'); 
+    }
+    
+    function closeAddManualModal() { goBack(); }
+
+    // SIMPAN BARANG MANUAL DENGAN POP-UP PICKER & VALIDASI KETAT
     function simpanBarangManualLokal() {
-        const kategori = document.getElementById('manualKategori').value;
-        const merek = document.getElementById('manualMerek').value;
+        const kategori = document.getElementById('manualKategori').value.trim();
+        const merek = document.getElementById('manualMerek').value.trim();
         const barcodePabrik = document.getElementById('manualBarcodePabrik').value.trim();
         const nama = document.getElementById('manualNama').value.trim();
         const hpp = parseRawNumber('manualHpp');
@@ -380,84 +1185,204 @@
             return; 
         }
 
-        // VALIDASI BARCODE GANDA BEDA PRODUK
+        // 🛑 VALIDASI 1: Barcode Pabrik ganda beda produk
         if (barcodePabrik && barcodePabrik !== "-") {
             const barcodeClean = barcodePabrik.toLowerCase();
-            const barcodeExist = localInventory.find(i => String(i.barcode_pabrik || "").toLowerCase() === barcodeClean);
+            const barcodeExist = localInventory.find(i => 
+                String(i.barcode_pabrik || i.Barcode_Pabrik || "").trim().toLowerCase() === barcodeClean
+            );
 
-            if (barcodeExist && (barcodeExist.nama_barang.toLowerCase() !== nama.toLowerCase() || barcodeExist.merek.toLowerCase() !== merek.toLowerCase())) {
-                alert(`🛑 GAGAL SIMPAN!\nBarcode "${barcodePabrik}" sudah terdaftar pada produk: [${barcodeExist.merek}] ${barcodeExist.nama_barang}`);
-                return;
+            if (barcodeExist) {
+                const existNama = barcodeExist.nama_barang || barcodeExist.Nama_Barang;
+                const existMerek = barcodeExist.merek || barcodeExist.Merek || "-";
+
+                if (existNama.toLowerCase() !== nama.toLowerCase() || existMerek.toLowerCase() !== merek.toLowerCase()) {
+                    alert(`🛑 GAGAL MENYIMPAN!\n\nBarcode Pabrik "${barcodePabrik}" sudah terdaftar pada produk:\n[${existMerek}] ${existNama}\n\nSatu barcode pabrik tidak boleh digunakan oleh barang atau merek yang berbeda.`);
+                    return;
+                }
             }
         }
 
-        // PEMERIKSAAN PENGGABUNGAN STOK (KATEGORI + MEREK + NAMA)
+        // 🔍 VALIDASI 2: Penggabungan Stok (Kategori + Merek + Nama)
         const matchedItem = localInventory.find(i => 
-            String(i.kategori).toLowerCase() === kategori.toLowerCase() &&
-            String(i.merek).toLowerCase() === merek.toLowerCase() &&
-            String(i.nama_barang).toLowerCase() === nama.toLowerCase()
+            String(i.kategori || i.Kategori || "").trim().toLowerCase() === kategori.toLowerCase() &&
+            String(i.merek || i.Merek || "").trim().toLowerCase() === merek.toLowerCase() &&
+            String(i.nama_barang || i.Nama_Barang || "").trim().toLowerCase() === nama.toLowerCase()
         );
 
         if (matchedItem) {
-            matchedItem.stok = parseInt(matchedItem.stok || 0) + stok;
-            alert(`🔍 Stok Ditemukan Sama!\nStok barang "[${merek}] ${nama}" bertambah menjadi ${matchedItem.stok}.`);
+            const currentStok = parseInt(matchedItem.stok || matchedItem.Stok) || 0;
+            matchedItem.stok = currentStok + stok;
+            alert(`🔍 Barang Ditemukan Sama!\nStok barang "[${merek}] ${nama}" otomatis bertambah dari ${currentStok} menjadi ${matchedItem.stok}.`);
         } else {
             const newSku = "SP-" + Math.floor(100000 + Math.random() * 900000);
-            localInventory.push({
-                sku: newSku, kategori, merek,
+            const newItem = {
+                sku: newSku,
+                kategori: kategori,
+                merek: merek,
                 barcode_pabrik: barcodePabrik || "-",
-                nama_barang: nama, hpp, harga_jual: jual, stok,
-                tgl_masuk: new Date().toISOString().split('T')[0]
-            });
-            alert(`✅ Barang Baru Ditambahkan dengan SKU: ${newSku}`);
+                nama_barang: nama,
+                hpp: hpp,
+                harga_jual: jual,
+                stok: stok,
+                status: "Di Toko",
+                no_pesanan: "MANUAL",
+                tgl_masuk: getLocalDateString()
+            };
+            localInventory.push(newItem);
+            alert(`✅ Barang Stok Baru Berhasil Ditambahkan dengan SKU Toko: ${newSku}`);
         }
 
-        localStorage.setItem('pos_inventory', JSON.stringify(localInventory));
-        
+        saveAllLocal();
+
         // RESET FORM
         document.getElementById('manualKategori').value = "";
         document.getElementById('manualMerek').value = "";
         document.getElementById('manualKategoriBrandDisplay').value = "";
+        document.getElementById('manualBarcodePabrik').value = "";
         document.getElementById('manualNama').value = "";
         document.getElementById('manualHpp').value = "";
         document.getElementById('manualHargaJual').value = "";
-        
+        document.getElementById('manualStok').value = "1";
+
         closeAddManualModal();
         renderInventoryList();
     }
 
-    function renderInventoryList() {
-        const listDiv = document.getElementById('inventoryList');
-        const selCat = document.getElementById('filterInvCategory').value;
-        const selBrand = document.getElementById('filterInvBrand').value;
+    function bukaModalEditBarang(sku) {
+        const item = localInventory.find(i => (i.sku || i.SKU) === sku);
+        if(!item) return;
 
-        let filtered = localInventory;
-        if (selCat) filtered = filtered.filter(i => String(i.kategori).toLowerCase() === selCat.toLowerCase());
-        if (selBrand) filtered = filtered.filter(i => String(i.merek).toLowerCase() === selBrand.toLowerCase());
+        document.getElementById('editSku').value = sku;
+        document.getElementById('editKategori').value = item.kategori || item.Kategori || "";
+        document.getElementById('editMerek').value = item.merek || item.Merek || "";
+        document.getElementById('editBarcodePabrik').value = item.barcode_pabrik || item.Barcode_Pabrik || "";
+        document.getElementById('editNama').value = item.nama_barang || item.Nama_Barang;
+        
+        let editHppInput = document.getElementById('editHpp');
+        editHppInput.value = item.hpp || item.HPP || "";
+        formatRupiahInput(editHppInput);
 
-        if (filtered.length === 0) {
-            listDiv.innerHTML = "<p style='text-align:center; color:#777;'>Belum ada barang di inventaris.</p>";
+        let editHargaInput = document.getElementById('editHargaJual');
+        editHargaInput.value = item.harga_jual || item.Harga_Jual || "";
+        formatRupiahInput(editHargaInput);
+
+        document.getElementById('editStok').value = item.stok || item.Stok;
+
+        openPage('editItemModal');
+    }
+
+    function closeEditModal() { goBack(); }
+
+    function simpanEditBarangLokal() {
+        const sku = document.getElementById('editSku').value;
+        const item = localInventory.find(i => (i.sku || i.SKU) === sku);
+        if(item) {
+            item.kategori = document.getElementById('editKategori').value;
+            item.merek = document.getElementById('editMerek').value;
+            item.barcode_pabrik = document.getElementById('editBarcodePabrik').value;
+            item.nama_barang = document.getElementById('editNama').value;
+            item.hpp = parseRawNumber('editHpp');
+            item.harga_jual = parseRawNumber('editHargaJual');
+            item.stok = document.getElementById('editStok').value;
+
+            saveAllLocal();
+            alert("Barang Berhasil Diperbarui!");
+            goBack();
+            renderInventoryList();
+        }
+    }
+
+    // PENGATURAN MASTER KATEGORI & MEREK
+    function renderMasterCategoriesBrands() {
+        const div = document.getElementById('masterCategoryBrandList');
+        if (!div) return;
+
+        if (localMasterBrands.length === 0) {
+            div.innerHTML = "<small style='color:#777;'>Belum ada master kategori dan merek.</small>";
             return;
         }
 
-        listDiv.innerHTML = filtered.map(item => `
-            <div class="item-row">
-                <span class="badge-tag">${item.kategori || 'Umum'}</span>
-                <span class="badge-tag" style="background:#dbeafe; color:#1e40af;">${item.merek || '-'}</span><br>
-                <b>[${item.sku}] ${item.nama_barang}</b><br>
-                <small style="color:#555;">Barcode: ${item.barcode_pabrik}</small><br>
-                Stok: <b>${item.stok}</b> | HPP: Rp ${formatRupiah(item.hpp)} | Jual: Rp ${formatRupiah(item.harga_jual)}
+        div.innerHTML = localMasterBrands.map((bm, idx) => `
+            <div class="item-row" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b>[${bm.category}]</b> ${bm.brand}
+                </div>
+                <button class="btn-danger btn-sm" onclick="hapusMasterBrand(${idx})">🗑️ Hapus</button>
             </div>
         `).join('');
     }
 
-    function showAddManualModal() { openPage('addManualModal'); }
-    function closeAddManualModal() { goBack(); }
+    function simpanMasterCategoryBrand() {
+        const cat = document.getElementById('newCatName').value.trim();
+        const brand = document.getElementById('newBrandName').value.trim();
 
-    window.onload = function() {
-        populateFilterDropdowns();
-        renderInventoryList();
-    };
+        if (!cat || !brand) {
+            alert("⚠️ Kategori dan Merek wajib diisi!");
+            return;
+        }
+
+        if (!localMasterCategories.includes(cat)) {
+            localMasterCategories.push(cat);
+        }
+
+        const exist = localMasterBrands.some(b => b.category.toLowerCase() === cat.toLowerCase() && b.brand.toLowerCase() === brand.toLowerCase());
+        if (!exist) {
+            localMasterBrands.push({ category: cat, brand: brand });
+            saveMasterData();
+            renderMasterCategoriesBrands();
+            alert(`✅ Merek "${brand}" berhasil ditambahkan ke Kategori "${cat}"!`);
+            document.getElementById('newCatName').value = "";
+            document.getElementById('newBrandName').value = "";
+        } else {
+            alert("⚠️ Kategori dan Merek ini sudah ada di master data.");
+        }
+    }
+
+    function hapusMasterBrand(index) {
+        if (confirm("Yakin ingin menghapus merek ini dari master data?")) {
+            localMasterBrands.splice(index, 1);
+            saveMasterData();
+            renderMasterCategoriesBrands();
+        }
+    }
+
+    function switchSettingsTab(n) {
+        document.getElementById('btnSetTab1').classList.remove('active');
+        document.getElementById('btnSetTab2').classList.remove('active');
+        document.getElementById('btnSetTab3').classList.remove('active');
+        
+        document.getElementById('tabProfilNota').classList.add('hidden');
+        document.getElementById('tabKelolaStaf').classList.add('hidden');
+        document.getElementById('tabMasterCategoryBrand').classList.add('hidden');
+
+        if (n === 1) {
+            document.getElementById('btnSetTab1').classList.add('active');
+            document.getElementById('tabProfilNota').classList.remove('hidden');
+        } else if (n === 2) {
+            document.getElementById('btnSetTab2').classList.add('active');
+            document.getElementById('tabKelolaStaf').classList.remove('hidden');
+            renderUsersList();
+        } else if (n === 3) {
+            document.getElementById('btnSetTab3').classList.add('active');
+            document.getElementById('tabMasterCategoryBrand').classList.remove('hidden');
+            renderMasterCategoriesBrands();
+        }
+    }
+
+    function applyRolePermissions() {
+        const r = currentUser ? currentUser.role.toLowerCase() : '';
+        
+        document.querySelectorAll('.role-owner, .role-kasir, .role-teknisi').forEach(el => el.classList.add('hidden'));
+
+        if(r.includes('teknisi')) {
+            document.querySelectorAll('.role-teknisi').forEach(el => el.classList.remove('hidden'));
+        } else if(r.includes('kasir')) {
+            document.querySelectorAll('.role-kasir').forEach(el => el.classList.remove('hidden'));
+        } else {
+            document.querySelectorAll('.role-owner, .role-kasir, .role-teknisi').forEach(el => el.classList.remove('hidden'));
+        }
+    }
 </script>
 </body>
 </html>
