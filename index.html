@@ -47,6 +47,15 @@
             background-color: #f8fafc;
             transition: all 0.2s ease;
         }
+        
+        /* 📱 Fix khusus agar checkbox tidak mengambil lebar 100% di HP */
+        input[type="checkbox"] {
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            cursor: pointer;
+        }
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #2563eb;
@@ -475,7 +484,7 @@
         </div>
 
         <div style="margin-top: 12px; background: #f8fafc; padding: 10px; border-radius: 12px; border:1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-            <label style="font-weight: bold; cursor: pointer; margin:0; font-size:13px;">
+            <label style="font-weight: bold; cursor: pointer; margin:0; font-size:13px; display:flex; align-items:center; gap:6px;">
                 <input type="checkbox" id="selectAllInv" class="chk-box" onchange="toggleSelectAllInventory(this.checked)"> Pilih Semua
             </label>
             <button class="btn-danger btn-sm" onclick="hapusTerpilihLokal()" style="margin: 0;">🗑️ Hapus Dipilih</button>
@@ -1193,7 +1202,7 @@
         document.getElementById('loginSection').classList.remove('hidden'); 
     }
 
-    // MANAJEMEN STOK & INVENTARIS (PERBAIKAN TATA LETAK RAPI RATA KIRI)
+    // MANAJEMEN STOK & INVENTARIS
     function renderInventoryList() {
         const listDiv = document.getElementById('inventoryList');
         const selChkAll = document.getElementById('selectAllInv');
@@ -1246,6 +1255,37 @@
             </div>
             `;
         }).join('');
+    }
+
+    // 🔴 FUNGSI HAPUS & CENTANG SEMUA BARANG
+    function toggleSelectAllInventory(isChecked) {
+        const checkboxes = document.querySelectorAll('.item-chk');
+        checkboxes.forEach(chk => {
+            chk.checked = isChecked;
+        });
+    }
+
+    function hapusBarangLokal(sku) {
+        if (confirm(`Yakin ingin menghapus barang dengan SKU: ${sku}?`)) {
+            localInventory = localInventory.filter(i => (i.sku || i.SKU) !== sku);
+            saveAllLocal();
+            renderInventoryList();
+        }
+    }
+
+    function hapusTerpilihLokal() {
+        const selectedCheckboxes = document.querySelectorAll('.item-chk:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert("⚠️ Belum ada barang yang dipilih!");
+            return;
+        }
+
+        if (confirm(`Yakin ingin menghapus ${selectedCheckboxes.length} barang terpilih?`)) {
+            const skusToDelete = Array.from(selectedCheckboxes).map(chk => chk.getAttribute('data-sku'));
+            localInventory = localInventory.filter(i => !skusToDelete.includes(i.sku || i.SKU));
+            saveAllLocal();
+            renderInventoryList();
+        }
     }
 
     function showAddManualModal() { openPage('addManualModal'); }
