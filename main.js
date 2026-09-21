@@ -2,7 +2,7 @@
 // ⚙️ MODUL UTAMA & SINKRONISASI (main.js)
 // ==========================================
 
-const API_URL = "https://script.google.com/macros/s/AKfycbymdKsDDnD31gURSiTleKNfehQv9jBHF2Ogthfz2ego7kmdsRrOVxU-V8G3IrGpkFLD0A/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz8GQpxi6RIo_oBL9fdd3Ow0SVqIU6PDy9sxJ2DkJ_2jBT8ZT08HUmdW7cozeM5MAq37A/exec";
 
 // 📦 DEKLARASI VARIABEL GLOBAL & LOKAL STORAGE
 let currentUser = null;
