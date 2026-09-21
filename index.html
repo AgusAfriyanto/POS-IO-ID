@@ -82,6 +82,7 @@
             background: #ffffff; 
             border-radius: 14px; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            text-align: left;
         }
         .btn-sm { padding: 6px 12px; font-size: 12px; margin-top: 5px; width: auto; display: inline-block; border-radius: 8px; }
         .search-results { background: white; border: 1px solid #cbd5e1; max-height: 160px; overflow-y: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -1192,7 +1193,7 @@
         document.getElementById('loginSection').classList.remove('hidden'); 
     }
 
-    // MANAJEMEN STOK & INVENTARIS
+    // MANAJEMEN STOK & INVENTARIS (PERBAIKAN TATA LETAK RAPI RATA KIRI)
     function renderInventoryList() {
         const listDiv = document.getElementById('inventoryList');
         const selChkAll = document.getElementById('selectAllInv');
@@ -1225,23 +1226,26 @@
             const stok = item.stok || item.Stok || 0;
 
             return `
-            <div class="item-row" style="display:flex; align-items:center;">
-                <input type="checkbox" class="chk-box item-chk" data-sku="${sku}">
-                <div style="flex:1;">
-                    <div style="margin-bottom:2px;">
+            <div class="item-row" style="display:flex; align-items:flex-start; gap:12px; text-align:left;">
+                <input type="checkbox" class="chk-box item-chk" data-sku="${sku}" style="margin-top:4px;">
+                <div style="flex:1; text-align:left;">
+                    <div style="margin-bottom:4px;">
                         <span class="badge-tag">${kat}</span>
                         <span class="badge-tag" style="background:#dbeafe; color:#1e40af;">${mrk}</span>
                     </div>
-                    <b>[${sku}] ${nama}</b><br>
-                    <small style="color:#555;">Barcode Pabrik: <b>${barcodePabrik}</b></small><br>
-                    Stok: <b>${stok}</b> | HPP: Rp ${formatRupiah(hpp)} | Jual: Rp ${formatRupiah(jual)}
-                    <div style="margin-top:5px;">
+                    <b style="color:#0f172a;">[${sku}] ${nama}</b><br>
+                    <small style="color:#64748b;">Barcode Pabrik: <b>${barcodePabrik}</b></small><br>
+                    <div style="font-size:12px; font-weight:600; color:#334155; margin-top:4px;">
+                        Stok: <b>${stok}</b> | HPP: Rp ${formatRupiah(hpp)} | Jual: Rp ${formatRupiah(jual)}
+                    </div>
+                    <div style="margin-top:8px; display:flex; gap:6px;">
                         <button class="btn-warning btn-sm" onclick="bukaModalEditBarang('${sku}')">✏️ Edit</button>
                         <button class="btn-danger btn-sm" onclick="hapusBarangLokal('${sku}')">🗑️ Hapus</button>
                     </div>
                 </div>
             </div>
-        `}).join('');
+            `;
+        }).join('');
     }
 
     function showAddManualModal() { openPage('addManualModal'); }
